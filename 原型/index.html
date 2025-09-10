@@ -1,0 +1,1611 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>仪表盘 - EasyKafka</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --darker: #0f172a;
+            --light: #f1f5f9;
+            --lighter: #f8fafc;
+        }
+
+        body {
+            background-color: var(--darker);
+            color: var(--light);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .sidebar {
+            background: linear-gradient(180deg, var(--dark) 0%, rgba(30, 41, 59, 0.8) 100%);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-item {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: var(--primary);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .menu-item:hover::before, .menu-item.active::before {
+            transform: translateX(0);
+        }
+
+        .menu-item:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+            padding-left: 1.5rem;
+        }
+
+        .menu-item.active {
+            background-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(30, 41, 59, 0.5);
+            color: var(--light);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: var(--primary);
+        }
+
+        .header {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            font-size: 1.5rem;
+        }
+
+        .connection-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--success);
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        .search-box {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            color: var(--light);
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .theme-toggle {
+            width: 50px;
+            height: 25px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 25px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle-slider {
+            position: absolute;
+            top: 2.5px;
+            left: 2.5px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle.active {
+            background: var(--primary);
+        }
+
+        .theme-toggle.active .theme-toggle-slider {
+            transform: translateX(25px);
+        }
+
+        
+            
+
+        .footer {
+            background: rgba(15, 23, 42, 0.8);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .metric-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+
+        .metric-change {
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .metric-change.positive {
+            color: var(--success);
+        }
+
+        .metric-change.negative {
+            color: var(--danger);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+            background: rgba(30, 41, 59, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .chart-container.large {
+            height: 400px;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .status-indicator.online {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .status-indicator.offline {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .status-indicator.warning {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .tab:hover {
+            color: var(--primary);
+        }
+
+        .tab.active {
+            color: var(--primary);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .time-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .time-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            background: rgba(30, 41, 59, 0.5);
+            color: var(--light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .time-btn:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: var(--primary);
+        }
+
+        .time-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .alert.warning {
+            background-color: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: var(--warning);
+        }
+
+        .alert.error {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--danger);
+        }
+
+        .alert.info {
+            background-color: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: var(--primary);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            transition: width 0.3s ease;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--dark);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--success);
+        }
+
+        .toast.error {
+            border-left: 4px solid var(--danger);
+        }
+
+        .toast.info {
+            border-left: 4px solid var(--primary);
+        }
+
+        .toast.warning {
+            border-left: 4px solid var(--warning);
+        }
+
+        .toast-icon {
+            margin-right: 0.75rem;
+            font-size: 1.25rem;
+        }
+
+        .toast.success .toast-icon {
+            color: var(--success);
+        }
+
+        .toast.error .toast-icon {
+            color: var(--danger);
+        }
+
+        .toast.info .toast-icon {
+            color: var(--primary);
+        }
+
+        .toast.warning .toast-icon {
+            color: var(--warning);
+        }
+
+        /* 确保主内容区域滚动条正确显示 */
+        main {
+            height: calc(100vh - 80px); /* 减去头部高度 */
+            overflow-y: auto !important;
+        }
+
+        /* 自定义滚动条样式 */
+        main::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        main::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.3);
+            border-radius: 4px;
+        }
+
+        main::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.5);
+            border-radius: 4px;
+        }
+
+        main::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.8);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="header py-4 px-6 flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            <h1 class="logo">EasyKafka</h1>
+            <div class="flex items-center space-x-2">
+                <span class="connection-indicator"></span>
+                <span class="text-sm">已连接: localhost:9092</span>
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="theme-toggle" id="themeToggle">
+                <div class="theme-toggle-slider"></div>
+            </div>
+            <div class="relative">
+                <i class="fas fa-bell text-xl cursor-pointer"></i>
+                <span class="notification-badge">5</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <img src="https://picsum.photos/seed/user123/40/40.jpg" alt="用户头像" class="w-10 h-10 rounded-full">
+                <span>管理员</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-1">
+        <!-- Sidebar -->
+        <aside class="sidebar w-64 py-6 px-4 flex flex-col" id="sidebar">
+            <nav class="flex-1">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="index.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-home w-5"></i>
+                            <span>仪表盘</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="cluster-management.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-server w-5"></i>
+                            <span>集群管理</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="topic-management.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-stream w-5"></i>
+                            <span>主题管理</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="producer.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-paper-plane w-5"></i>
+                            <span>消息生产者</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="consumer.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-inbox w-5"></i>
+                            <span>消息消费者</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="consumer-group.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-users w-5"></i>
+                            <span>消费者组管理</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="logs.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-history w-5"></i>
+                            <span>操作日志</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="settings.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-cog w-5"></i>
+                            <span>设置</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="mt-auto pt-4 border-t border-gray-700">
+                <div class="flex items-center justify-between text-sm text-gray-400">
+                    <span>版本: 1.0.0</span>
+                    <span>© 2023 EasyKafka</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6 overflow-y-auto">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold mb-2">监控与可视化</h2>
+                <p class="text-gray-400">实时监控Kafka集群状态和性能指标</p>
+            </div>
+
+            <!-- Alerts -->
+            <div class="alert warning mb-6">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                <span>警告: 消费者组 analytics-consumer-group 的Lag过高，可能影响数据处理</span>
+            </div>
+
+            <!-- Cluster Overview -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div class="metric-card">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="metric-label">在线Broker</span>
+                        <i class="fas fa-server text-green-500"></i>
+                    </div>
+                    <div class="metric-value text-green-500">3/3</div>
+                    <div class="metric-change positive">+0 较昨日</div>
+                </div>
+                <div class="metric-card">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="metric-label">总Topic数</span>
+                        <i class="fas fa-stream text-blue-500"></i>
+                    </div>
+                    <div class="metric-value text-blue-500">24</div>
+                    <div class="metric-change positive">+2 较昨日</div>
+                </div>
+                <div class="metric-card">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="metric-label">总Partition数</span>
+                        <i class="fas fa-layer-group text-purple-500"></i>
+                    </div>
+                    <div class="metric-value text-purple-500">156</div>
+                    <div class="metric-change positive">+12 较昨日</div>
+                </div>
+                <div class="metric-card">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="metric-label">总Lag</span>
+                        <i class="fas fa-clock text-yellow-500"></i>
+                    </div>
+                    <div class="metric-value text-yellow-500">24,580</div>
+                    <div class="metric-change negative">-1,200 较昨日</div>
+                </div>
+            </div>
+
+            <!-- Time Range Selector -->
+            <div class="time-selector mb-6">
+                <button class="time-btn active" data-range="5m">5分钟</button>
+                <button class="time-btn" data-range="15m">15分钟</button>
+                <button class="time-btn" data-range="1h">1小时</button>
+                <button class="time-btn" data-range="6h">6小时</button>
+                <button class="time-btn" data-range="24h">24小时</button>
+                <button class="time-btn" data-range="custom">自定义</button>
+            </div>
+
+            <!-- Monitoring Tabs -->
+            <div class="tabs mb-6">
+                <div class="tab active" onclick="switchTab('cluster')">集群监控</div>
+                <div class="tab" onclick="switchTab('topic')">主题监控</div>
+                <div class="tab" onclick="switchTab('consumer')">消费者组监控</div>
+                <div class="tab" onclick="switchTab('broker')">Broker监控</div>
+                <div class="tab" onclick="switchTab('alerts')">告警中心</div>
+            </div>
+
+            <!-- Cluster Monitoring Tab -->
+            <div class="tab-content active" id="clusterTab">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div class="card p-6">
+                        <h3 class="text-lg font-bold mb-4">消息生产/消费速率</h3>
+                        <div class="chart-container">
+                            <canvas id="throughputChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card p-6">
+                        <h3 class="text-lg font-bold mb-4">磁盘使用趋势</h3>
+                        <div class="chart-container">
+                            <canvas id="diskUsageChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div class="card p-6">
+                        <h3 class="text-lg font-bold mb-4">网络I/O吞吐量</h3>
+                        <div class="chart-container">
+                            <canvas id="networkIOChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card p-6">
+                        <h3 class="text-lg font-bold mb-4">集群负载分布</h3>
+                        <div class="chart-container">
+                            <div id="loadDistributionChart"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-6">
+                    <h3 class="text-lg font-bold mb-4">Broker状态监控</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="text-left text-gray-400 border-b border-gray-700">
+                                    <th class="pb-3">Broker ID</th>
+                                    <th class="pb-3">状态</th>
+                                    <th class="pb-3">主机</th>
+                                    <th class="pb-3">端口</th>
+                                    <th class="pb-3">分区数</th>
+                                    <th class="pb-3">Leader数</th>
+                                    <th class="pb-3">磁盘使用</th>
+                                    <th class="pb-3">网络I/O</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-gray-700">
+                                    <td class="py-3 font-medium">0</td>
+                                    <td class="py-3">
+                                        <span class="status-indicator online">在线</span>
+                                    </td>
+                                    <td class="py-3">localhost</td>
+                                    <td class="py-3">9092</td>
+                                    <td class="py-3">52</td>
+                                    <td class="py-3">18</td>
+                                    <td class="py-3">
+                                        <div>
+                                            <span>65.2 GB / 100 GB</span>
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: 65%"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3">12.5 MB/s</td>
+                                </tr>
+                                <tr class="border-b border-gray-700">
+                                    <td class="py-3 font-medium">1</td>
+                                    <td class="py-3">
+                                        <span class="status-indicator online">在线</span>
+                                    </td>
+                                    <td class="py-3">localhost</td>
+                                    <td class="py-3">9093</td>
+                                    <td class="py-3">52</td>
+                                    <td class="py-3">19</td>
+                                    <td class="py-3">
+                                        <div>
+                                            <span>58.7 GB / 100 GB</span>
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: 59%"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3">11.8 MB/s</td>
+                                </tr>
+                                <tr class="border-b border-gray-700">
+                                    <td class="py-3 font-medium">2</td>
+                                    <td class="py-3">
+                                        <span class="status-indicator online">在线</span>
+                                    </td>
+                                    <td class="py-3">localhost</td>
+                                    <td class="py-3">9094</td>
+                                    <td class="py-3">52</td>
+                                    <td class="py-3">19</td>
+                                    <td class="py-3">
+                                        <div>
+                                            <span>62.1 GB / 100 GB</span>
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: 62%"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3">13.2 MB/s</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Topic Monitoring Tab -->
+            <div class="tab-content" id="topicTab">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <div class="card p-6">
+                        <h3 class="text-lg font-bold mb-4">热门主题</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span>order-events</span>
+                                    <span class="text-sm text-gray-400">1,245 msg/s</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 85%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span>user-events</span>
+                                    <span class="text-sm text-gray-400">890 msg/s</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 60%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span>payment-events</span>
+                                    <span class="text-sm text-gray-400">567 msg/s</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 40%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card p-6">
+                        <h3 class="text-lg font-bold mb-4">主题Lag分布</h3>
+                        <div class="chart-container">
+                            <div id="topicLagChart"></div>
+                        </div>
+                    </div>
+                    <div class="card p-6">
+                        <h3 class="text-lg font-bold mb-4">消息大小分布</h3>
+                        <div class="chart-container">
+                            <canvas id="messageSizeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-6">
+                    <h3 class="text-lg font-bold mb-4">主题详情监控</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="text-left text-gray-400 border-b border-gray-700">
+                                    <th class="pb-3">主题</th>
+                                    <th class="pb-3">分区数</th>
+                                    <th class="pb-3">生产速率</th>
+                                    <th class="pb-3">消费速率</th>
+                                    <th class="pb-3">总Lag</th>
+                                    <th class="pb-3">平均消息大小</th>
+                                    <th class="pb-3">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-gray-700">
+                                    <td class="py-3 font-medium">order-events</td>
+                                    <td class="py-3">5</td>
+                                    <td class="py-3">1,245 msg/s</td>
+                                    <td class="py-3">1,120 msg/s</td>
+                                    <td class="py-3">3,245</td>
+                                    <td class="py-3">2.3 KB</td>
+                                    <td class="py-3">
+                                        <button class="btn-secondary text-sm px-3 py-1">查看详情</button>
+                                    </td>
+                                </tr>
+                                <tr class="border-b border-gray-700">
+                                    <td class="py-3 font-medium">user-events</td>
+                                    <td class="py-3">3</td>
+                                    <td class="py-3">890 msg/s</td>
+                                    <td class="py-3">890 msg/s</td>
+                                    <td class="py-3">0</td>
+                                    <td class="py-3">1.8 KB</td>
+                                    <td class="py-3">
+                                        <button class="btn-secondary text-sm px-3 py-1">查看详情</button>
+                                    </td>
+                                </tr>
+                                <tr class="border-b border-gray-700">
+                                    <td class="py-3 font-medium">payment-events</td>
+                                    <td class="py-3">3</td>
+                                    <td class="py-3">567 msg/s</td>
+                                    <td class="py-3">567 msg/s</td>
+                                    <td class="py-3">0</td>
+                                    <td class="py-3">1.5 KB</td>
+                                    <td class="py-3">
+                                        <button class="btn-secondary text-sm px-3 py-1">查看详情</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Consumer Group Monitoring Tab -->
+            <div class="tab-content" id="consumerTab">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div class="card p-6">
+                        <h3 class="text-lg font-bold mb-4">消费者组Lag趋势</h3>
+                        <div class="chart-container">
+                            <canvas id="consumerLagChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card p-6">
+                        <h3 class="text-lg font-bold mb-4">消费速率对比</h3>
+                        <div class="chart-container">
+                            <canvas id="consumerRateChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-6">
+                    <h3 class="text-lg font-bold mb-4">消费者组监控</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="text-left text-gray-400 border-b border-gray-700">
+                                    <th class="pb-3">消费者组</th>
+                                    <th class="pb-3">状态</th>
+                                    <th class="pb-3">成员数</th>
+                                    <th class="pb-3">主题数</th>
+                                    <th class="pb-3">总Lag</th>
+                                    <th class="pb-3">最大Lag</th>
+                                    <th class="pb-3">平均消费速率</th>
+                                    <th class="pb-3">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-gray-700">
+                                    <td class="py-3 font-medium">order-processing-group</td>
+                                    <td class="py-3">
+                                        <span class="status-indicator online">稳定</span>
+                                    </td>
+                                    <td class="py-3">3</td>
+                                    <td class="py-3">2</td>
+                                    <td class="py-3">3,245</td>
+                                    <td class="py-3">1,245</td>
+                                    <td class="py-3">1,120 msg/s</td>
+                                    <td class="py-3">
+                                        <button class="btn-secondary text-sm px-3 py-1">查看详情</button>
+                                    </td>
+                                </tr>
+                                <tr class="border-b border-gray-700">
+                                    <td class="py-3 font-medium">analytics-consumer-group</td>
+                                    <td class="py-3">
+                                        <span class="status-indicator warning">警告</span>
+                                    </td>
+                                    <td class="py-3">1</td>
+                                    <td class="py-3">3</td>
+                                    <td class="py-3">8,450</td>
+                                    <td class="py-3">4,225</td>
+                                    <td class="py-3">234 msg/s</td>
+                                    <td class="py-3">
+                                        <button class="btn-secondary text-sm px-3 py-1">查看详情</button>
+                                    </td>
+                                </tr>
+                                <tr class="border-b border-gray-700">
+                                    <td class="py-3 font-medium">notification-service-group</td>
+                                    <td class="py-3">
+                                        <span class="status-indicator online">稳定</span>
+                                    </td>
+                                    <td class="py-3">2</td>
+                                    <td class="py-3">1</td>
+                                    <td class="py-3">320</td>
+                                    <td class="py-3">160</td>
+                                    <td class="py-3">890 msg/s</td>
+                                    <td class="py-3">
+                                        <button class="btn-secondary text-sm px-3 py-1">查看详情</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Broker Monitoring Tab -->
+            <div class="tab-content" id="brokerTab">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <div class="card p-6">
+                        <h3 class="text-lg font-bold mb-4">CPU使用率</h3>
+                        <div class="chart-container">
+                            <canvas id="cpuUsageChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card p-6">
+                        <h3 class="text-lg font-bold mb-4">内存使用率</h3>
+                        <div class="chart-container">
+                            <canvas id="memoryUsageChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card p-6">
+                        <h3 class="text-lg font-bold mb-4">磁盘I/O</h3>
+                        <div class="chart-container">
+                            <canvas id="diskIOChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts Tab -->
+            <div class="tab-content" id="alertsTab">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <div class="card p-6">
+                        <h3 class="text-lg font-bold mb-4">告警统计</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span>严重</span>
+                                <span class="text-red-500 font-bold">2</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>警告</span>
+                                <span class="text-yellow-500 font-bold">5</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>信息</span>
+                                <span class="text-blue-500 font-bold">12</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card p-6">
+                        <h3 class="text-lg font-bold mb-4">最近告警</h3>
+                        <div class="space-y-3">
+                            <div class="alert warning">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                <span>消费者组 analytics-consumer-group Lag过高</span>
+                            </div>
+                            <div class="alert error">
+                                <i class="fas fa-exclamation-circle mr-2"></i>
+                                <span>Broker 2 磁盘使用率超过80%</span>
+                            </div>
+                            <div class="alert info">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                <span>新主题 user-events 已创建</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card p-6">
+                        <h3 class="text-lg font-bold mb-4">告警规则</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span>Lag > 5000</span>
+                                <span class="text-yellow-500">启用</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>磁盘使用率 > 80%</span>
+                                <span class="text-red-500">启用</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>Broker离线</span>
+                                <span class="text-red-500">启用</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i class="toast-icon fas"></i>
+        <div>
+            <div class="font-medium" id="toastTitle">通知</div>
+            <div class="text-sm text-gray-400" id="toastMessage">消息内容</div>
+        </div>
+    </div>
+
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', function() {
+            this.classList.toggle('active');
+            // Here you would implement the actual theme switching logic
+        });
+
+        
+
+        // Time Range Selector
+        const timeButtons = document.querySelectorAll('.time-btn');
+        timeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                timeButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                const range = this.dataset.range;
+                showToast('info', '时间范围更新', `已切换到 ${this.textContent} 时间范围`);
+                // Here you would implement the actual data refresh logic
+                refreshCharts(range);
+            });
+        });
+
+        // Tab Switching
+        function switchTab(tabName) {
+            // Update tab buttons
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update tab content
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            
+            // Initialize charts for the active tab
+            setTimeout(() => {
+                initializeChartsForTab(tabName);
+            }, 100);
+        }
+
+        // Initialize Charts
+        function initializeChartsForTab(tabName) {
+            switch(tabName) {
+                case 'cluster':
+                    initializeClusterCharts();
+                    break;
+                case 'topic':
+                    initializeTopicCharts();
+                    break;
+                case 'consumer':
+                    initializeConsumerCharts();
+                    break;
+                case 'broker':
+                    initializeBrokerCharts();
+                    break;
+            }
+        }
+
+        function initializeClusterCharts() {
+            // Throughput Chart
+            const throughputCtx = document.getElementById('throughputChart').getContext('2d');
+            new Chart(throughputCtx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                    datasets: [{
+                        label: '生产速率',
+                        data: [1200, 1100, 1300, 1450, 1600, 1500, 1400],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: '消费速率',
+                        data: [1150, 1050, 1250, 1400, 1550, 1450, 1350],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#94a3b8'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Disk Usage Chart
+            const diskCtx = document.getElementById('diskUsageChart').getContext('2d');
+            new Chart(diskCtx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                    datasets: [{
+                        label: '磁盘使用',
+                        data: [60, 62, 65, 67, 70, 68, 65],
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#94a3b8'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Network I/O Chart
+            const networkCtx = document.getElementById('networkIOChart').getContext('2d');
+            new Chart(networkCtx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                    datasets: [{
+                        label: '网络输入',
+                        data: [8.5, 7.2, 12.3, 15.6, 18.2, 14.5, 11.8],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: '网络输出',
+                        data: [7.8, 6.9, 11.5, 14.8, 17.1, 13.9, 11.2],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#94a3b8'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Load Distribution Chart
+            const loadChart = echarts.init(document.getElementById('loadDistributionChart'));
+            const loadOption = {
+                tooltip: {
+                    trigger: 'item',
+                    backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    textStyle: { color: '#fff' }
+                },
+                legend: {
+                    orient: 'vertical',
+                    left: 'left',
+                    textStyle: { color: '#94a3b8' }
+                },
+                series: [{
+                    name: '负载分布',
+                    type: 'pie',
+                    radius: '50%',
+                    data: [
+                        { value: 35, name: 'Broker 0', itemStyle: { color: '#3b82f6' } },
+                        { value: 32, name: 'Broker 1', itemStyle: { color: '#10b981' } },
+                        { value: 33, name: 'Broker 2', itemStyle: { color: '#8b5cf6' } }
+                    ],
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }]
+            };
+            loadChart.setOption(loadOption);
+        }
+
+        function initializeTopicCharts() {
+            // Topic Lag Chart
+            const topicLagChart = echarts.init(document.getElementById('topicLagChart'));
+            const topicLagOption = {
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    textStyle: { color: '#fff' }
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['order-events', 'user-events', 'payment-events', 'log-events', 'analytics-events'],
+                    axisLabel: { color: '#94a3b8' },
+                    axisLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.1)' } }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLabel: { color: '#94a3b8' },
+                    axisLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.1)' } },
+                    splitLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.1)' } }
+                },
+                series: [{
+                    data: [3245, 0, 0, 120, 8450],
+                    type: 'bar',
+                    itemStyle: { color: '#f59e0b' }
+                }]
+            };
+            topicLagChart.setOption(topicLagOption);
+
+            // Message Size Chart
+            const messageSizeCtx = document.getElementById('messageSizeChart').getContext('2d');
+            new Chart(messageSizeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['< 1KB', '1-5KB', '5-10KB', '> 10KB'],
+                    datasets: [{
+                        data: [45, 35, 15, 5],
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initializeConsumerCharts() {
+            // Consumer Lag Chart
+            const consumerLagCtx = document.getElementById('consumerLagChart').getContext('2d');
+            new Chart(consumerLagCtx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                    datasets: [{
+                        label: 'order-processing-group',
+                        data: [3000, 3200, 3100, 3245, 3300, 3250, 3245],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: false
+                    }, {
+                        label: 'analytics-consumer-group',
+                        data: [8000, 8200, 8300, 8450, 8500, 8470, 8450],
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        tension: 0.4,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#94a3b8' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+
+            // Consumer Rate Chart
+            const consumerRateCtx = document.getElementById('consumerRateChart').getContext('2d');
+            new Chart(consumerRateCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['order-processing-group', 'notification-service-group', 'analytics-consumer-group'],
+                    datasets: [{
+                        label: '消费速率 (msg/s)',
+                        data: [1120, 890, 234],
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#94a3b8' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initializeBrokerCharts() {
+            // CPU Usage Chart
+            const cpuCtx = document.getElementById('cpuUsageChart').getContext('2d');
+            new Chart(cpuCtx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                    datasets: [
+                        {
+                            label: 'Broker 0',
+                            data: [45, 42, 48, 52, 55, 50, 47],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: false
+                        },
+                        {
+                            label: 'Broker 1',
+                            data: [40, 38, 45, 48, 50, 46, 43],
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: false
+                        },
+                        {
+                            label: 'Broker 2',
+                            data: [42, 40, 46, 50, 53, 48, 45],
+                            borderColor: '#8b5cf6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            tension: 0.4,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#94a3b8' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+
+            // Memory Usage Chart
+            const memoryCtx = document.getElementById('memoryUsageChart').getContext('2d');
+            new Chart(memoryCtx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                    datasets: [
+                        {
+                            label: 'Broker 0',
+                            data: [65, 68, 72, 75, 78, 73, 70],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: false
+                        },
+                        {
+                            label: 'Broker 1',
+                            data: [60, 62, 65, 68, 70, 66, 64],
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: false
+                        },
+                        {
+                            label: 'Broker 2',
+                            data: [63, 65, 68, 71, 74, 69, 67],
+                            borderColor: '#8b5cf6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            tension: 0.4,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#94a3b8' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+
+            // Disk I/O Chart
+            const diskIOCtx = document.getElementById('diskIOChart').getContext('2d');
+            new Chart(diskIOCtx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                    datasets: [
+                        {
+                            label: '读取速率 (MB/s)',
+                            data: [45, 42, 55, 65, 70, 58, 50],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: false
+                        },
+                        {
+                            label: '写入速率 (MB/s)',
+                            data: [35, 32, 48, 58, 62, 50, 42],
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#94a3b8' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function refreshCharts(range) {
+            showToast('info', '数据刷新', `正在刷新 ${range} 时间范围的数据...`);
+            // Here you would implement the actual data refresh logic
+            setTimeout(() => {
+                showToast('success', '数据刷新完成', '监控数据已更新');
+            }, 1000);
+        }
+
+        // Toast Notification
+        function showToast(type, title, message) {
+            const toast = document.getElementById('toast');
+            const toastIcon = toast.querySelector('.toast-icon');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            // Set toast content
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+            
+            // Set toast type
+            toast.className = 'toast ' + type;
+            
+            // Set icon based on type
+            if (type === 'success') {
+                toastIcon.className = 'toast-icon fas fa-check-circle';
+            } else if (type === 'error') {
+                toastIcon.className = 'toast-icon fas fa-exclamation-circle';
+            } else if (type === 'info') {
+                toastIcon.className = 'toast-icon fas fa-info-circle';
+            } else if (type === 'warning') {
+                toastIcon.className = 'toast-icon fas fa-exclamation-circle';
+            }
+            
+            // Show toast
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+            
+            // Hide toast after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        
+
+        // Initialize charts on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeClusterCharts();
+        });
+    </script>
+</body>
+</html>

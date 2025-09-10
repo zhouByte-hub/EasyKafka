@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>集群管理 - EasyKafka</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --darker: #0f172a;
+            --light: #f1f5f9;
+            --lighter: #f8fafc;
+        }
+
+        body {
+            background-color: var(--darker);
+            color: var(--light);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .sidebar {
+            background: linear-gradient(180deg, var(--dark) 0%, rgba(30, 41, 59, 0.8) 100%);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-item {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: var(--primary);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .menu-item:hover::before, .menu-item.active::before {
+            transform: translateX(0);
+        }
+
+        .menu-item:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+            padding-left: 1.5rem;
+        }
+
+        .menu-item.active {
+            background-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(30, 41, 59, 0.5);
+            color: var(--light);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: var(--primary);
+        }
+
+        .header {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            font-size: 1.5rem;
+        }
+
+        .connection-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--success);
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        .search-box {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            color: var(--light);
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .theme-toggle {
+            width: 50px;
+            height: 25px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 25px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle-slider {
+            position: absolute;
+            top: 2.5px;
+            left: 2.5px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle.active {
+            background: var(--primary);
+        }
+
+        .theme-toggle.active .theme-toggle-slider {
+            transform: translateX(25px);
+        }
+
+        
+        
+
+
+        .footer {
+            background: rgba(15, 23, 42, 0.8);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .cluster-card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+
+
+        .cluster-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+        }
+
+        .cluster-card:hover {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .cluster-card.active {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 1px var(--primary);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--dark);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--light);
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .form-select {
+            width: 100%;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--light);
+            transition: all 0.3s ease;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .form-checkbox {
+            width: 1.25rem;
+            height: 1.25rem;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin-right: 0.5rem;
+            cursor: pointer;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .tab:hover {
+            color: var(--primary);
+        }
+
+        .tab.active {
+            color: var(--primary);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        /* 确保主内容区域滚动条正确显示 */
+        main {
+            height: calc(100vh - 80px); /* 减去头部高度 */
+            overflow-y: auto !important;
+        }
+
+        /* 自定义滚动条样式 */
+        main::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        main::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.3);
+            border-radius: 4px;
+        }
+
+        main::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.5);
+            border-radius: 4px;
+        }
+
+        main::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.8);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="header py-4 px-6 flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            <h1 class="logo">EasyKafka</h1>
+            <div class="flex items-center space-x-2">
+                <span class="connection-indicator"></span>
+                <span class="text-sm">已连接: localhost:9092</span>
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="relative">
+                <input type="text" placeholder="搜索集群..." class="search-box w-64">
+                <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+            <div class="theme-toggle" id="themeToggle">
+                <div class="theme-toggle-slider"></div>
+            </div>
+            <div class="relative">
+                <i class="fas fa-bell text-xl cursor-pointer"></i>
+                <span class="notification-badge">3</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <img src="https://picsum.photos/seed/user123/40/40.jpg" alt="用户头像" class="w-10 h-10 rounded-full">
+                <span>管理员</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-1">
+        <!-- Sidebar -->
+        <aside class="sidebar w-64 py-6 px-4 flex flex-col">
+            <nav class="flex-1">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="index.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-home w-5"></i>
+                            <span>仪表盘</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="cluster-management.html" class="menu-item active flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-server w-5"></i>
+                            <span>集群管理</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="topic-management.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-stream w-5"></i>
+                            <span>主题管理</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="producer.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-paper-plane w-5"></i>
+                            <span>消息生产者</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="consumer.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-inbox w-5"></i>
+                            <span>消息消费者</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="consumer-group.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-users w-5"></i>
+                            <span>消费者组管理</span>
+                        </a>
+                    </li>
+                    
+                    <li>
+                        <a href="logs.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-history w-5"></i>
+                            <span>操作日志</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="settings.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-cog w-5"></i>
+                            <span>设置</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="mt-auto pt-4 border-t border-gray-700">
+                <div class="flex items-center justify-between text-sm text-gray-400">
+                    <span>版本: 1.0.0</span>
+                    <span>© 2023 EasyKafka</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6 overflow-y-auto">
+            <div class="mb-6 flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">集群管理</h2>
+                    <p class="text-gray-400">管理您的Kafka集群连接</p>
+                </div>
+                <button class="btn-primary" id="addClusterBtn">
+                    <i class="fas fa-plus mr-2"></i>添加集群
+                </button>
+            </div>
+
+            <!-- Clusters Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div class="cluster-card active">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-xl font-bold">开发集群</h3>
+                        <span class="text-green-500 text-sm font-medium">已连接</span>
+                    </div>
+                    <div class="mb-4">
+                        <p class="text-gray-400 text-sm mb-1">Bootstrap Servers</p>
+                        <p class="font-mono text-sm">localhost:9092</p>
+                    </div>
+                    <div class="mb-4">
+                        <p class="text-gray-400 text-sm mb-1">Broker数量</p>
+                        <p class="font-medium">3</p>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-gray-400 text-sm mb-1">协议</p>
+                            <p class="font-medium">PLAINTEXT</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="btn-secondary text-sm" onclick="testConnection('开发集群')">
+                                <i class="fas fa-plug mr-1"></i>测试
+                            </button>
+                            <button class="btn-secondary text-sm" onclick="editCluster('开发集群')">
+                                <i class="fas fa-edit mr-1"></i>编辑
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cluster-card">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-xl font-bold">测试集群</h3>
+                        <span class="text-gray-500 text-sm font-medium">未连接</span>
+                    </div>
+                    <div class="mb-4">
+                        <p class="text-gray-400 text-sm mb-1">Bootstrap Servers</p>
+                        <p class="font-mono text-sm">test.example.com:9092</p>
+                    </div>
+                    <div class="mb-4">
+                        <p class="text-gray-400 text-sm mb-1">Broker数量</p>
+                        <p class="font-medium">-</p>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-gray-400 text-sm mb-1">协议</p>
+                            <p class="font-medium">SASL_SSL</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="btn-secondary text-sm" onclick="testConnection('测试集群')">
+                                <i class="fas fa-plug mr-1"></i>测试
+                            </button>
+                            <button class="btn-secondary text-sm" onclick="editCluster('测试集群')">
+                                <i class="fas fa-edit mr-1"></i>编辑
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cluster-card">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-xl font-bold">生产集群</h3>
+                        <span class="text-gray-500 text-sm font-medium">未连接</span>
+                    </div>
+                    <div class="mb-4">
+                        <p class="text-gray-400 text-sm mb-1">Bootstrap Servers</p>
+                        <p class="font-mono text-sm">prod.example.com:9092,prod.example.com:9093,prod.example.com:9094</p>
+                    </div>
+                    <div class="mb-4">
+                        <p class="text-gray-400 text-sm mb-1">Broker数量</p>
+                        <p class="font-medium">-</p>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-gray-400 text-sm mb-1">协议</p>
+                            <p class="font-medium">SSL</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="btn-secondary text-sm" onclick="testConnection('生产集群')">
+                                <i class="fas fa-plug mr-1"></i>测试
+                            </button>
+                            <button class="btn-secondary text-sm" onclick="editCluster('生产集群')">
+                                <i class="fas fa-edit mr-1"></i>编辑
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cluster Details -->
+            <div class="card p-6 mb-8">
+                <h3 class="text-xl font-bold mb-4">集群详情 - 开发集群</h3>
+                
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('overview')">概览</div>
+                    <div class="tab" onclick="switchTab('brokers')">Brokers</div>
+                    <div class="tab" onclick="switchTab('config')">配置</div>
+                </div>
+
+                <div id="overview-tab" class="tab-content active">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                            <p class="text-gray-400 text-sm mb-1">Broker数量</p>
+                            <p class="text-2xl font-bold">3</p>
+                        </div>
+                        <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                            <p class="text-gray-400 text-sm mb-1">主题数量</p>
+                            <p class="text-2xl font-bold">24</p>
+                        </div>
+                        <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                            <p class="text-gray-400 text-sm mb-1">分区总数</p>
+                            <p class="text-2xl font-bold">96</p>
+                        </div>
+                        <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                            <p class="text-gray-400 text-sm mb-1">控制器</p>
+                            <p class="text-2xl font-bold">Broker 1</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                            <h4 class="font-bold mb-3">集群版本信息</h4>
+                            <div class="space-y-2">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">Kafka版本</span>
+                                    <span>3.4.0</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">协议版本</span>
+                                    <span>2.7</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">提交ID</span>
+                                    <span class="font-mono text-sm">2a19f7e</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                            <h4 class="font-bold mb-3">集群状态</h4>
+                            <div class="space-y-2">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">健康状态</span>
+                                    <span class="text-green-500">健康</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">在线Broker</span>
+                                    <span>3/3</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">控制器状态</span>
+                                    <span class="text-green-500">活跃</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="brokers-tab" class="tab-content">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="text-left text-gray-400 border-b border-gray-700">
+                                    <th class="pb-3">Broker ID</th>
+                                    <th class="pb-3">主机</th>
+                                    <th class="pb-3">端口</th>
+                                    <th class="pb-3">状态</th>
+                                    <th class="pb-3">分区数</th>
+                                    <th class="pb-3">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-gray-700 hover:bg-gray-800">
+                                    <td class="py-3">1</td>
+                                    <td class="py-3">localhost</td>
+                                    <td class="py-3">9092</td>
+                                    <td class="py-3"><span class="text-green-500">在线</span></td>
+                                    <td class="py-3">32</td>
+                                    <td class="py-3">
+                                        <button class="text-blue-500 hover:text-blue-400 mr-3">
+                                            <i class="fas fa-info-circle"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="border-b border-gray-700 hover:bg-gray-800">
+                                    <td class="py-3">2</td>
+                                    <td class="py-3">localhost</td>
+                                    <td class="py-3">9093</td>
+                                    <td class="py-3"><span class="text-green-500">在线</span></td>
+                                    <td class="py-3">32</td>
+                                    <td class="py-3">
+                                        <button class="text-blue-500 hover:text-blue-400 mr-3">
+                                            <i class="fas fa-info-circle"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-800">
+                                    <td class="py-3">3</td>
+                                    <td class="py-3">localhost</td>
+                                    <td class="py-3">9094</td>
+                                    <td class="py-3"><span class="text-green-500">在线</span></td>
+                                    <td class="py-3">32</td>
+                                    <td class="py-3">
+                                        <button class="text-blue-500 hover:text-blue-400 mr-3">
+                                            <i class="fas fa-info-circle"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="config-tab" class="tab-content">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                            <h4 class="font-bold mb-3">连接配置</h4>
+                            <div class="space-y-2">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">Bootstrap Servers</span>
+                                    <span class="font-mono text-sm">localhost:9092</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">协议</span>
+                                    <span>PLAINTEXT</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">请求超时</span>
+                                    <span>30000ms</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">重试次数</span>
+                                    <span>3</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                            <h4 class="font-bold mb-3">安全配置</h4>
+                            <div class="space-y-2">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">SASL机制</span>
+                                    <span>无</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">SSL启用</span>
+                                    <span>否</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">证书验证</span>
+                                    <span>否</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">认证方式</span>
+                                    <span>无</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    
+
+    <!-- Add/Edit Cluster Modal -->
+    <div id="clusterModal" class="modal">
+        <div class="modal-content">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold" id="modalTitle">添加集群</h3>
+                    <button class="text-gray-400 hover:text-white" onclick="closeModal()">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <form id="clusterForm">
+                    <div class="form-group">
+                        <label class="form-label">集群名称</label>
+                        <input type="text" class="form-input" id="clusterName" placeholder="例如：开发集群" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Bootstrap Servers</label>
+                        <input type="text" class="form-input" id="bootstrapServers" placeholder="例如：localhost:9092" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">协议</label>
+                        <select class="form-select" id="protocol">
+                            <option value="PLAINTEXT">PLAINTEXT</option>
+                            <option value="SSL">SSL</option>
+                            <option value="SASL_PLAINTEXT">SASL_PLAINTEXT</option>
+                            <option value="SASL_SSL">SASL_SSL</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">请求超时 (ms)</label>
+                        <input type="number" class="form-input" id="requestTimeout" value="30000">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">重试次数</label>
+                        <input type="number" class="form-input" id="retryCount" value="3">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">安全配置</label>
+                        <div class="space-y-2">
+                            <div class="flex items-center">
+                                <input type="checkbox" class="form-checkbox" id="enableSasl">
+                                <label for="enableSasl">启用SASL认证</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" class="form-checkbox" id="enableSsl">
+                                <label for="enableSsl">启用SSL加密</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" class="btn-secondary" onclick="closeModal()">取消</button>
+                        <button type="submit" class="btn-primary">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', function() {
+            this.classList.toggle('active');
+            // Here you would implement the actual theme switching logic
+        });
+
+        
+
+        // Modal Functions
+        const clusterModal = document.getElementById('clusterModal');
+        const addClusterBtn = document.getElementById('addClusterBtn');
+        const clusterForm = document.getElementById('clusterForm');
+        const modalTitle = document.getElementById('modalTitle');
+
+        addClusterBtn.addEventListener('click', function() {
+            modalTitle.textContent = '添加集群';
+            clusterForm.reset();
+            clusterModal.classList.add('active');
+        });
+
+        function closeModal() {
+            clusterModal.classList.remove('active');
+        }
+
+        function editCluster(clusterName) {
+            modalTitle.textContent = '编辑集群';
+            // Here you would populate the form with the cluster data
+            clusterModal.classList.add('active');
+        }
+
+        function testConnection(clusterName) {
+            // Here you would implement the actual connection test
+            alert(`正在测试 ${clusterName} 的连接...`);
+        }
+
+        // Tab Switching
+        function switchTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab content
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        // Form Submission
+        clusterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Here you would save the cluster configuration
+            const clusterData = {
+                name: document.getElementById('clusterName').value,
+                bootstrapServers: document.getElementById('bootstrapServers').value,
+                protocol: document.getElementById('protocol').value,
+                requestTimeout: document.getElementById('requestTimeout').value,
+                retryCount: document.getElementById('retryCount').value,
+                enableSasl: document.getElementById('enableSasl').checked,
+                enableSsl: document.getElementById('enableSsl').checked
+            };
+
+            console.log('Saving cluster:', clusterData);
+            
+            // Close modal
+            closeModal();
+            
+            // Show success message
+            alert('集群配置已保存！');
+        });
+
+        // Close modal when clicking outside
+        clusterModal.addEventListener('click', function(e) {
+            if (e.target === clusterModal) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

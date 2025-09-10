@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主题管理 - EasyKafka</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --darker: #0f172a;
+            --light: #f1f5f9;
+            --lighter: #f8fafc;
+        }
+
+        body {
+            background-color: var(--darker);
+            color: var(--light);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .sidebar {
+            background: linear-gradient(180deg, var(--dark) 0%, rgba(30, 41, 59, 0.8) 100%);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-item {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: var(--primary);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .menu-item:hover::before, .menu-item.active::before {
+            transform: translateX(0);
+        }
+
+        .menu-item:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+            padding-left: 1.5rem;
+        }
+
+        .menu-item.active {
+            background-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(30, 41, 59, 0.5);
+            color: var(--light);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: var(--primary);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: var(--danger);
+        }
+
+        .header {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            font-size: 1.5rem;
+        }
+
+        .connection-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--success);
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        .search-box {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            color: var(--light);
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .theme-toggle {
+            width: 50px;
+            height: 25px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 25px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle-slider {
+            position: absolute;
+            top: 2.5px;
+            left: 2.5px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle.active {
+            background: var(--primary);
+        }
+
+        .theme-toggle.active .theme-toggle-slider {
+            transform: translateX(25px);
+        }
+
+        
+
+        .footer {
+            background: rgba(15, 23, 42, 0.8);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--dark);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--light);
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .form-select {
+            width: 100%;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--light);
+            transition: all 0.3s ease;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .form-textarea {
+            width: 100%;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--light);
+            transition: all 0.3s ease;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .tab:hover {
+            color: var(--primary);
+        }
+
+        .tab.active {
+            color: var(--primary);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .topic-row {
+            transition: all 0.3s ease;
+        }
+
+        .topic-row:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .partition-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .partition-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+        }
+
+        .config-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .config-item:last-child {
+            border-bottom: none;
+        }
+
+        .leader-distribution {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .leader-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .leader-badge-1 {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .leader-badge-2 {
+            background-color: rgba(139, 92, 246, 0.2);
+            color: #8b5cf6;
+        }
+
+        .leader-badge-3 {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .confirm-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 1001;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .confirm-modal.active {
+            display: flex;
+        }
+
+        .confirm-content {
+            background: var(--dark);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            padding: 2rem;
+        }
+
+        .filter-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .filter-dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: var(--dark);
+            min-width: 200px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            right: 0;
+        }
+
+        .filter-dropdown-content a {
+            color: var(--light);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+
+        .filter-dropdown-content a:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .filter-dropdown:hover .filter-dropdown-content {
+            display: block;
+        }
+
+        /* 确保主内容区域滚动条正确显示 */
+        main {
+            height: calc(100vh - 80px); /* 减去头部高度 */
+            overflow-y: auto !important;
+        }
+
+        /* 自定义滚动条样式 */
+        main::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        main::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.3);
+            border-radius: 4px;
+        }
+
+        main::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.5);
+            border-radius: 4px;
+        }
+
+        main::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.8);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="header py-4 px-6 flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            <h1 class="logo">EasyKafka</h1>
+            <div class="flex items-center space-x-2">
+                <span class="connection-indicator"></span>
+                <span class="text-sm">已连接: localhost:9092</span>
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="relative">
+                <input type="text" placeholder="搜索主题..." class="search-box w-64" id="topicSearch">
+                <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+            <div class="theme-toggle" id="themeToggle">
+                <div class="theme-toggle-slider"></div>
+            </div>
+            <div class="relative">
+                <i class="fas fa-bell text-xl cursor-pointer"></i>
+                <span class="notification-badge">3</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <img src="https://picsum.photos/seed/user123/40/40.jpg" alt="用户头像" class="w-10 h-10 rounded-full">
+                <span>管理员</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-1">
+        <!-- Sidebar -->
+        <aside class="sidebar w-64 py-6 px-4 flex flex-col" id="sidebar">
+            <nav class="flex-1">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="index.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-home w-5"></i>
+                            <span>仪表盘</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="cluster-management.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-server w-5"></i>
+                            <span>集群管理</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="topic-management.html" class="menu-item active flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-stream w-5"></i>
+                            <span>主题管理</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="producer.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-paper-plane w-5"></i>
+                            <span>消息生产者</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="consumer.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-inbox w-5"></i>
+                            <span>消息消费者</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="consumer-group.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-users w-5"></i>
+                            <span>消费者组管理</span>
+                        </a>
+                    </li>
+                    
+                    <li>
+                        <a href="logs.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-history w-5"></i>
+                            <span>操作日志</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="settings.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-cog w-5"></i>
+                            <span>设置</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="mt-auto pt-4 border-t border-gray-700">
+                <div class="flex items-center justify-between text-sm text-gray-400">
+                    <span>版本: 1.0.0</span>
+                    <span>© 2023 EasyKafka</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6 overflow-y-auto">
+            <div class="mb-6 flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">主题管理</h2>
+                    <p class="text-gray-400">管理您的Kafka主题</p>
+                </div>
+                <div class="flex space-x-3">
+                    <div class="filter-dropdown">
+                        <button class="btn-secondary">
+                            <i class="fas fa-filter mr-2"></i>筛选
+                        </button>
+                        <div class="filter-dropdown-content">
+                            <a href="#" onclick="filterTopics('all')">全部主题</a>
+                            <a href="#" onclick="filterTopics('internal')">内部主题</a>
+                            <a href="#" onclick="filterTopics('user')">用户主题</a>
+                            <a href="#" onclick="filterTopics('system')">系统主题</a>
+                        </div>
+                    </div>
+                    <button class="btn-primary" id="addTopicBtn">
+                        <i class="fas fa-plus mr-2"></i>创建主题
+                    </button>
+                </div>
+            </div>
+
+            <!-- Topics Table -->
+            <div class="card p-6 mb-8">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="text-left text-gray-400 border-b border-gray-700">
+                                <th class="pb-3">名称</th>
+                                <th class="pb-3">分区数</th>
+                                <th class="pb-3">副本数</th>
+                                <th class="pb-3">消息数</th>
+                                <th class="pb-3">状态</th>
+                                <th class="pb-3">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topicsTableBody">
+                            <tr class="topic-row border-b border-gray-700">
+                                <td class="py-3 font-medium">user-events</td>
+                                <td class="py-3">
+                                    <div>12</div>
+                                    <div class="partition-bar">
+                                        <div class="partition-fill" style="width: 100%"></div>
+                                    </div>
+                                </td>
+                                <td class="py-3">3</td>
+                                <td class="py-3">1,245,892</td>
+                                <td class="py-3"><span class="text-green-500">活跃</span></td>
+                                <td class="py-3">
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-500 hover:text-blue-400" onclick="viewTopicDetails('user-events')">
+                                            <i class="fas fa-info-circle"></i>
+                                        </button>
+                                        <button class="text-yellow-500 hover:text-yellow-400" onclick="editTopic('user-events')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="text-red-500 hover:text-red-400" onclick="confirmDeleteTopic('user-events')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="topic-row border-b border-gray-700">
+                                <td class="py-3 font-medium">order-events</td>
+                                <td class="py-3">
+                                    <div>8</div>
+                                    <div class="partition-bar">
+                                        <div class="partition-fill" style="width: 100%"></div>
+                                    </div>
+                                </td>
+                                <td class="py-3">3</td>
+                                <td class="py-3">856,421</td>
+                                <td class="py-3"><span class="text-green-500">活跃</span></td>
+                                <td class="py-3">
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-500 hover:text-blue-400" onclick="viewTopicDetails('order-events')">
+                                            <i class="fas fa-info-circle"></i>
+                                        </button>
+                                        <button class="text-yellow-500 hover:text-yellow-400" onclick="editTopic('order-events')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="text-red-500 hover:text-red-400" onclick="confirmDeleteTopic('order-events')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="topic-row border-b border-gray-700">
+                                <td class="py-3 font-medium">payment-events</td>
+                                <td class="py-3">
+                                    <div>6</div>
+                                    <div class="partition-bar">
+                                        <div class="partition-fill" style="width: 100%"></div>
+                                    </div>
+                                </td>
+                                <td class="py-3">3</td>
+                                <td class="py-3">432,156</td>
+                                <td class="py-3"><span class="text-green-500">活跃</span></td>
+                                <td class="py-3">
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-500 hover:text-blue-400" onclick="viewTopicDetails('payment-events')">
+                                            <i class="fas fa-info-circle"></i>
+                                        </button>
+                                        <button class="text-yellow-500 hover:text-yellow-400" onclick="editTopic('payment-events')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="text-red-500 hover:text-red-400" onclick="confirmDeleteTopic('payment-events')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="topic-row border-b border-gray-700">
+                                <td class="py-3 font-medium">notification-events</td>
+                                <td class="py-3">
+                                    <div>4</div>
+                                    <div class="partition-bar">
+                                        <div class="partition-fill" style="width: 100%"></div>
+                                    </div>
+                                </td>
+                                <td class="py-3">3</td>
+                                <td class="py-3">215,789</td>
+                                <td class="py-3"><span class="text-green-500">活跃</span></td>
+                                <td class="py-3">
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-500 hover:text-blue-400" onclick="viewTopicDetails('notification-events')">
+                                            <i class="fas fa-info-circle"></i>
+                                        </button>
+                                        <button class="text-yellow-500 hover:text-yellow-400" onclick="editTopic('notification-events')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="text-red-500 hover:text-red-400" onclick="confirmDeleteTopic('notification-events')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="topic-row border-b border-gray-700">
+                                <td class="py-3 font-medium">log-events</td>
+                                <td class="py-3">
+                                    <div>16</div>
+                                    <div class="partition-bar">
+                                        <div class="partition-fill" style="width: 100%"></div>
+                                    </div>
+                                </td>
+                                <td class="py-3">3</td>
+                                <td class="py-3">3,456,789</td>
+                                <td class="py-3"><span class="text-green-500">活跃</span></td>
+                                <td class="py-3">
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-500 hover:text-blue-400" onclick="viewTopicDetails('log-events')">
+                                            <i class="fas fa-info-circle"></i>
+                                        </button>
+                                        <button class="text-yellow-500 hover:text-yellow-400" onclick="editTopic('log-events')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="text-red-500 hover:text-red-400" onclick="confirmDeleteTopic('log-events')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="topic-row">
+                                <td class="py-3 font-medium">analytics-events</td>
+                                <td class="py-3">
+                                    <div>10</div>
+                                    <div class="partition-bar">
+                                        <div class="partition-fill" style="width: 100%"></div>
+                                    </div>
+                                </td>
+                                <td class="py-3">3</td>
+                                <td class="py-3">1,876,543</td>
+                                <td class="py-3"><span class="text-green-500">活跃</span></td>
+                                <td class="py-3">
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-500 hover:text-blue-400" onclick="viewTopicDetails('analytics-events')">
+                                            <i class="fas fa-info-circle"></i>
+                                        </button>
+                                        <button class="text-yellow-500 hover:text-yellow-400" onclick="editTopic('analytics-events')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="text-red-500 hover:text-red-400" onclick="confirmDeleteTopic('analytics-events')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Topic Details -->
+            <div id="topicDetails" class="card p-6" style="display: none;">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold" id="topicDetailsTitle">主题详情 - user-events</h3>
+                    <button class="text-gray-400 hover:text-white" onclick="closeTopicDetails()">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTopicTab('overview')">概览</div>
+                    <div class="tab" onclick="switchTopicTab('partitions')">分区</div>
+                    <div class="tab" onclick="switchTopicTab('config')">配置</div>
+                    <div class="tab" onclick="switchTopicTab('messages')">消息</div>
+                </div>
+
+                <div id="topic-overview-tab" class="tab-content active">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                            <p class="text-gray-400 text-sm mb-1">分区数</p>
+                            <p class="text-2xl font-bold">12</p>
+                        </div>
+                        <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                            <p class="text-gray-400 text-sm mb-1">副本数</p>
+                            <p class="text-2xl font-bold">3</p>
+                        </div>
+                        <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                            <p class="text-gray-400 text-sm mb-1">消息数</p>
+                            <p class="text-2xl font-bold">1,245,892</p>
+                        </div>
+                        <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                            <p class="text-gray-400 text-sm mb-1">创建时间</p>
+                            <p class="text-lg font-bold">2023-05-15</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                            <h4 class="font-bold mb-3">主题信息</h4>
+                            <div class="space-y-2">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">主题名称</span>
+                                    <span>user-events</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">状态</span>
+                                    <span class="text-green-500">活跃</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">清理策略</span>
+                                    <span>delete</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">保留时间</span>
+                                    <span>7天</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                            <h4 class="font-bold mb-3">分区Leader分布</h4>
+                            <div class="leader-distribution">
+                                <span class="leader-badge leader-badge-1">Broker 1 (4)</span>
+                                <span class="leader-badge leader-badge-2">Broker 2 (4)</span>
+                                <span class="leader-badge leader-badge-3">Broker 3 (4)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="topic-partitions-tab" class="tab-content">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="text-left text-gray-400 border-b border-gray-700">
+                                    <th class="pb-3">分区ID</th>
+                                    <th class="pb-3">Leader</th>
+                                    <th class="pb-3">副本</th>
+                                    <th class="pb-3">ISR</th>
+                                    <th class="pb-3">最早偏移量</th>
+                                    <th class="pb-3">最新偏移量</th>
+                                    <th class="pb-3">消息数</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-gray-700 hover:bg-gray-800">
+                                    <td class="py-3">0</td>
+                                    <td class="py-3">1</td>
+                                    <td class="py-3">[1, 2, 3]</td>
+                                    <td class="py-3">[1, 2, 3]</td>
+                                    <td class="py-3">0</td>
+                                    <td class="py-3">103,824</td>
+                                    <td class="py-3">103,824</td>
+                                </tr>
+                                <tr class="border-b border-gray-700 hover:bg-gray-800">
+                                    <td class="py-3">1</td>
+                                    <td class="py-3">2</td>
+                                    <td class="py-3">[2, 3, 1]</td>
+                                    <td class="py-3">[2, 3, 1]</td>
+                                    <td class="py-3">0</td>
+                                    <td class="py-3">103,824</td>
+                                    <td class="py-3">103,824</td>
+                                </tr>
+                                <tr class="border-b border-gray-700 hover:bg-gray-800">
+                                    <td class="py-3">2</td>
+                                    <td class="py-3">3</td>
+                                    <td class="py-3">[3, 1, 2]</td>
+                                    <td class="py-3">[3, 1, 2]</td>
+                                    <td class="py-3">0</td>
+                                    <td class="py-3">103,824</td>
+                                    <td class="py-3">103,824</td>
+                                </tr>
+                                <tr class="border-b border-gray-700 hover:bg-gray-800">
+                                    <td class="py-3">3</td>
+                                    <td class="py-3">1</td>
+                                    <td class="py-3">[1, 2, 3]</td>
+                                    <td class="py-3">[1, 2, 3]</td>
+                                    <td class="py-3">0</td>
+                                    <td class="py-3">103,824</td>
+                                    <td class="py-3">103,824</td>
+                                </tr>
+                                <tr class="hover:bg-gray-800">
+                                    <td class="py-3">4</td>
+                                    <td class="py-3">2</td>
+                                    <td class="py-3">[2, 3, 1]</td>
+                                    <td class="py-3">[2, 3, 1]</td>
+                                    <td class="py-3">0</td>
+                                    <td class="py-3">103,824</td>
+                                    <td class="py-3">103,824</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="topic-config-tab" class="tab-content">
+                    <div class="space-y-4">
+                        <div class="config-item">
+                            <div>
+                                <div class="font-medium">cleanup.policy</div>
+                                <div class="text-sm text-gray-400">日志清理策略</div>
+                            </div>
+                            <div>delete</div>
+                        </div>
+                        <div class="config-item">
+                            <div>
+                                <div class="font-medium">retention.ms</div>
+                                <div class="text-sm text-gray-400">日志保留时间（毫秒）</div>
+                            </div>
+                            <div>604800000</div>
+                        </div>
+                        <div class="config-item">
+                            <div>
+                                <div class="font-medium">retention.bytes</div>
+                                <div class="text-sm text-gray-400">日志保留大小（字节）</div>
+                            </div>
+                            <div>-1</div>
+                        </div>
+                        <div class="config-item">
+                            <div>
+                                <div class="font-medium">segment.ms</div>
+                                <div class="text-sm text-gray-400">日志分段滚动时间（毫秒）</div>
+                            </div>
+                            <div>604800000</div>
+                        </div>
+                        <div class="config-item">
+                            <div>
+                                <div class="font-medium">segment.bytes</div>
+                                <div class="text-sm text-gray-400">日志分段大小（字节）</div>
+                            </div>
+                            <div>1073741824</div>
+                        </div>
+                        <div class="config-item">
+                            <div>
+                                <div class="font-medium">compression.type</div>
+                                <div class="text-sm text-gray-400">压缩类型</div>
+                            </div>
+                            <div>producer</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="topic-messages-tab" class="tab-content">
+                    <div class="mb-4 flex justify-between items-center">
+                        <div class="flex space-x-3">
+                            <div class="relative">
+                                <input type="text" placeholder="搜索消息..." class="search-box w-64">
+                                <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            </div>
+                            <select class="form-select w-40">
+                                <option>所有分区</option>
+                                <option>分区 0</option>
+                                <option>分区 1</option>
+                                <option>分区 2</option>
+                                <option>分区 3</option>
+                                <option>分区 4</option>
+                            </select>
+                        </div>
+                        <button class="btn-secondary">
+                            <i class="fas fa-sync-alt mr-2"></i>刷新
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="text-left text-gray-400 border-b border-gray-700">
+                                    <th class="pb-3">偏移量</th>
+                                    <th class="pb-3">分区</th>
+                                    <th class="pb-3">时间戳</th>
+                                    <th class="pb-3">Key</th>
+                                    <th class="pb-3">Value</th>
+                                    <th class="pb-3">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-gray-700 hover:bg-gray-800">
+                                    <td class="py-3 font-mono text-sm">103824</td>
+                                    <td class="py-3">0</td>
+                                    <td class="py-3">2023-11-20 14:32:15</td>
+                                    <td class="py-3 font-mono text-sm">user-12345</td>
+                                    <td class="py-3 max-w-xs truncate">{"event":"login","userId":"12345","timestamp":"2023-11-20T14:32:15Z"}</td>
+                                    <td class="py-3">
+                                        <button class="text-blue-500 hover:text-blue-400">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="border-b border-gray-700 hover:bg-gray-800">
+                                    <td class="py-3 font-mono text-sm">103823</td>
+                                    <td class="py-3">1</td>
+                                    <td class="py-3">2023-11-20 14:31:58</td>
+                                    <td class="py-3 font-mono text-sm">user-67890</td>
+                                    <td class="py-3 max-w-xs truncate">{"event":"logout","userId":"67890","timestamp":"2023-11-20T14:31:58Z"}</td>
+                                    <td class="py-3">
+                                        <button class="text-blue-500 hover:text-blue-400">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="border-b border-gray-700 hover:bg-gray-800">
+                                    <td class="py-3 font-mono text-sm">103822</td>
+                                    <td class="py-3">2</td>
+                                    <td class="py-3">2023-11-20 14:31:42</td>
+                                    <td class="py-3 font-mono text-sm">user-54321</td>
+                                    <td class="py-3 max-w-xs truncate">{"event":"profile_update","userId":"54321","timestamp":"2023-11-20T14:31:42Z"}</td>
+                                    <td class="py-3">
+                                        <button class="text-blue-500 hover:text-blue-400">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-800">
+                                    <td class="py-3 font-mono text-sm">103821</td>
+                                    <td class="py-3">3</td>
+                                    <td class="py-3">2023-11-20 14:31:25</td>
+                                    <td class="py-3 font-mono text-sm">user-98765</td>
+                                    <td class="py-3 max-w-xs truncate">{"event":"password_change","userId":"98765","timestamp":"2023-11-20T14:31:25Z"}</td>
+                                    <td class="py-3">
+                                        <button class="text-blue-500 hover:text-blue-400">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4 flex justify-between items-center">
+                        <div class="text-gray-400 text-sm">显示 1-4 条，共 1,245,892 条消息</div>
+                        <div class="flex space-x-2">
+                            <button class="btn-secondary" disabled>
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <button class="btn-secondary">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    
+
+    <!-- Add/Edit Topic Modal -->
+    <div id="topicModal" class="modal">
+        <div class="modal-content">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold" id="topicModalTitle">创建主题</h3>
+                    <button class="text-gray-400 hover:text-white" onclick="closeTopicModal()">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <form id="topicForm">
+                    <div class="form-group">
+                        <label class="form-label">主题名称</label>
+                        <input type="text" class="form-input" id="topicName" placeholder="例如：user-events" required>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group">
+                            <label class="form-label">分区数</label>
+                            <input type="number" class="form-input" id="partitionCount" value="3" min="1" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">副本数</label>
+                            <input type="number" class="form-input" id="replicationFactor" value="1" min="1" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">清理策略</label>
+                        <select class="form-select" id="cleanupPolicy">
+                            <option value="delete">delete (删除)</option>
+                            <option value="compact">compact (压缩)</option>
+                            <option value="compact,delete">compact,delete (压缩和删除)</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group">
+                            <label class="form-label">保留时间 (ms)</label>
+                            <input type="number" class="form-input" id="retentionMs" value="604800000" min="-1">
+                            <div class="text-xs text-gray-400 mt-1">-1 表示永不过期</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">保留大小 (bytes)</label>
+                            <input type="number" class="form-input" id="retentionBytes" value="-1" min="-1">
+                            <div class="text-xs text-gray-400 mt-1">-1 表示无大小限制</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">压缩类型</label>
+                        <select class="form-select" id="compressionType">
+                            <option value="producer">producer (生产者指定)</option>
+                            <option value="none">none (无压缩)</option>
+                            <option value="gzip">gzip</option>
+                            <option value="snappy">snappy</option>
+                            <option value="lz4">lz4</option>
+                            <option value="zstd">zstd</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">自定义配置</label>
+                        <textarea class="form-textarea" id="customConfig" placeholder="例如：max.message.bytes=10485760&#10;min.insync.replicas=2"></textarea>
+                        <div class="text-xs text-gray-400 mt-1">每行一个配置，格式为 key=value</div>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" class="btn-secondary" onclick="closeTopicModal()">取消</button>
+                        <button type="submit" class="btn-primary">创建</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteConfirmModal" class="confirm-modal">
+        <div class="confirm-content">
+            <div class="mb-6">
+                <h3 class="text-xl font-bold mb-2">确认删除</h3>
+                <p class="text-gray-400">您确定要删除主题 "<span id="deleteTopicName"></span>" 吗？此操作不可撤销。</p>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button class="btn-secondary" onclick="closeDeleteConfirmModal()">取消</button>
+                <button class="btn-danger" onclick="deleteTopic()">确认删除</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', function() {
+            this.classList.toggle('active');
+            // Here you would implement the actual theme switching logic
+        });
+
+        
+
+        // Topic Modal Functions
+        const topicModal = document.getElementById('topicModal');
+        const addTopicBtn = document.getElementById('addTopicBtn');
+        const topicForm = document.getElementById('topicForm');
+        const topicModalTitle = document.getElementById('topicModalTitle');
+
+        addTopicBtn.addEventListener('click', function() {
+            topicModalTitle.textContent = '创建主题';
+            topicForm.reset();
+            topicModal.classList.add('active');
+        });
+
+        function closeTopicModal() {
+            topicModal.classList.remove('active');
+        }
+
+        function editTopic(topicName) {
+            topicModalTitle.textContent = '编辑主题';
+            // Here you would populate the form with the topic data
+            document.getElementById('topicName').value = topicName;
+            document.getElementById('partitionCount').value = '12';
+            document.getElementById('replicationFactor').value = '3';
+            document.getElementById('cleanupPolicy').value = 'delete';
+            document.getElementById('retentionMs').value = '604800000';
+            document.getElementById('retentionBytes').value = '-1';
+            document.getElementById('compressionType').value = 'producer';
+            document.getElementById('customConfig').value = '';
+            
+            topicModal.classList.add('active');
+        }
+
+        // Delete Confirmation Modal Functions
+        const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+        let topicToDelete = '';
+
+        function confirmDeleteTopic(topicName) {
+            topicToDelete = topicName;
+            document.getElementById('deleteTopicName').textContent = topicName;
+            deleteConfirmModal.classList.add('active');
+        }
+
+        function closeDeleteConfirmModal() {
+            deleteConfirmModal.classList.remove('active');
+            topicToDelete = '';
+        }
+
+        function deleteTopic() {
+            // Here you would implement the actual topic deletion
+            console.log('Deleting topic:', topicToDelete);
+            
+            // Close modal
+            closeDeleteConfirmModal();
+            
+            // Show success message
+            alert(`主题 "${topicToDelete}" 已删除！`);
+            
+            // Here you would refresh the topics list
+        }
+
+        // Topic Details Functions
+        const topicDetails = document.getElementById('topicDetails');
+        let currentTopicName = '';
+
+        function viewTopicDetails(topicName) {
+            currentTopicName = topicName;
+            document.getElementById('topicDetailsTitle').textContent = `主题详情 - ${topicName}`;
+            topicDetails.style.display = 'block';
+            
+            // Reset to overview tab
+            switchTopicTab('overview');
+        }
+
+        function closeTopicDetails() {
+            topicDetails.style.display = 'none';
+            currentTopicName = '';
+        }
+
+        // Tab Switching for Topic Details
+        function switchTopicTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('#topicDetails .tab-content');
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('#topicDetails .tab');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab content
+            document.getElementById(`topic-${tabName}-tab`).classList.add('active');
+
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        // Topic Form Submission
+        topicForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Here you would save the topic configuration
+            const topicData = {
+                name: document.getElementById('topicName').value,
+                partitionCount: document.getElementById('partitionCount').value,
+                replicationFactor: document.getElementById('replicationFactor').value,
+                cleanupPolicy: document.getElementById('cleanupPolicy').value,
+                retentionMs: document.getElementById('retentionMs').value,
+                retentionBytes: document.getElementById('retentionBytes').value,
+                compressionType: document.getElementById('compressionType').value,
+                customConfig: document.getElementById('customConfig').value
+            };
+
+            console.log('Saving topic:', topicData);
+            
+            // Close modal
+            closeTopicModal();
+            
+            // Show success message
+            alert(`主题 "${topicData.name}" 已创建！`);
+            
+            // Here you would refresh the topics list
+        });
+
+        // Topic Search
+        const topicSearch = document.getElementById('topicSearch');
+        topicSearch.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#topicsTableBody tr');
+            
+            rows.forEach(row => {
+                const topicName = row.querySelector('td').textContent.toLowerCase();
+                if (topicName.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+
+        // Filter Topics
+        function filterTopics(filter) {
+            // Here you would implement the actual filtering logic
+            console.log('Filtering topics by:', filter);
+            alert(`正在筛选主题: ${filter}`);
+        }
+
+        // Close modals when clicking outside
+        topicModal.addEventListener('click', function(e) {
+            if (e.target === topicModal) {
+                closeTopicModal();
+            }
+        });
+
+        deleteConfirmModal.addEventListener('click', function(e) {
+            if (e.target === deleteConfirmModal) {
+                closeDeleteConfirmModal();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>操作日志 - EasyKafka</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --darker: #0f172a;
+            --light: #f1f5f9;
+            --lighter: #f8fafc;
+        }
+
+        body {
+            background-color: var(--darker);
+            color: var(--light);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .sidebar {
+            background: linear-gradient(180deg, var(--dark) 0%, rgba(30, 41, 59, 0.8) 100%);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-item {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: var(--primary);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .menu-item:hover::before, .menu-item.active::before {
+            transform: translateX(0);
+        }
+
+        .menu-item:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+            padding-left: 1.5rem;
+        }
+
+        .menu-item.active {
+            background-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(30, 41, 59, 0.5);
+            color: var(--light);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: var(--primary);
+        }
+
+        .header {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            font-size: 1.5rem;
+        }
+
+        .connection-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--success);
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        .search-box {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            color: var(--light);
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .theme-toggle {
+            width: 50px;
+            height: 25px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 25px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle-slider {
+            position: absolute;
+            top: 2.5px;
+            left: 2.5px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle.active {
+            background: var(--primary);
+        }
+
+        .theme-toggle.active .theme-toggle-slider {
+            transform: translateX(25px);
+        }
+
+        
+
+        
+
+        .footer {
+            background: rgba(15, 23, 42, 0.8);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .log-entry {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .log-entry:hover {
+            background: rgba(30, 41, 59, 0.3);
+            transform: translateX(5px);
+        }
+
+        .log-entry.success {
+            border-left-color: var(--success);
+        }
+
+        .log-entry.error {
+            border-left-color: var(--danger);
+        }
+
+        .log-entry.warning {
+            border-left-color: var(--warning);
+        }
+
+        .log-entry.info {
+            border-left-color: var(--primary);
+        }
+
+        .log-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        .log-icon.success {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .log-icon.error {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .log-icon.warning {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .log-icon.info {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: var(--primary);
+        }
+
+        .log-time {
+            color: #94a3b8;
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .log-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .log-description {
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+
+        .log-details {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 6px;
+            font-size: 0.875rem;
+            color: #cbd5e1;
+            display: none;
+        }
+
+        .log-entry.expanded .log-details {
+            display: block;
+        }
+
+        .filter-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-tag.success {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .filter-tag.error {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .filter-tag.warning {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .filter-tag.info {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .filter-tag.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .filter-tag:hover {
+            transform: translateY(-2px);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 2rem;
+        }
+
+        .pagination button {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--light);
+            padding: 0.5rem 0.75rem;
+            margin: 0 0.25rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .pagination button:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: var(--primary);
+        }
+
+        .pagination button.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--dark);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--success);
+        }
+
+        .toast.error {
+            border-left: 4px solid var(--danger);
+        }
+
+        .toast.info {
+            border-left: 4px solid var(--primary);
+        }
+
+        .toast.warning {
+            border-left: 4px solid var(--warning);
+        }
+
+        .toast-icon {
+            margin-right: 0.75rem;
+            font-size: 1.25rem;
+        }
+
+        .toast.success .toast-icon {
+            color: var(--success);
+        }
+
+        .toast.error .toast-icon {
+            color: var(--danger);
+        }
+
+        .toast.info .toast-icon {
+            color: var(--primary);
+        }
+
+        .toast.warning .toast-icon {
+            color: var(--warning);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--danger);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: bold;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 确保主内容区域滚动条正确显示 */
+        main {
+            height: calc(100vh - 80px);
+            overflow-y: auto !important;
+        }
+
+        /* 自定义滚动条样式 */
+        main::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        main::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 4px;
+        }
+
+        main::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.5);
+            border-radius: 4px;
+        }
+
+        main::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.8);
+        }
+
+        /* 日志表格样式 */
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(30, 41, 59, 0.3);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .log-table th {
+            background: rgba(15, 23, 42, 0.8);
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--light);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .log-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            vertical-align: middle;
+        }
+
+        .log-table tr:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .log-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .log-type-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+        }
+
+        .log-type-icon.success {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .log-type-icon.error {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .log-type-icon.warning {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .log-type-icon.info {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: var(--primary);
+        }
+
+        .log-details-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .log-details-btn:hover {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--light);
+        }
+
+        .log-details-row {
+            display: none;
+        }
+
+        .log-details-row.hidden {
+            display: none;
+        }
+
+        .log-details-row.show {
+            display: table-row;
+        }
+
+        .log-details-cell {
+            padding: 0 !important;
+        }
+
+        .log-details-content {
+            padding: 15px;
+            background: rgba(15, 23, 42, 0.5);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .log-details-content div {
+            margin-bottom: 8px;
+        }
+
+        .log-details-content div:last-child {
+            margin-bottom: 0;
+        }
+
+        
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="header py-4 px-6 flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            <h1 class="logo">EasyKafka</h1>
+            <div class="flex items-center space-x-2">
+                <span class="connection-indicator"></span>
+                <span class="text-sm">已连接: localhost:9092</span>
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="theme-toggle" id="themeToggle">
+                <div class="theme-toggle-slider"></div>
+            </div>
+            <div class="relative">
+                <i class="fas fa-bell text-xl cursor-pointer"></i>
+                <span class="notification-badge">3</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <img src="https://picsum.photos/seed/user123/40/40.jpg" alt="用户头像" class="w-10 h-10 rounded-full">
+                <span>管理员</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-1">
+        <!-- Sidebar -->
+        <aside class="sidebar w-64 py-6 px-4 flex flex-col">
+            <nav class="flex-1">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="index.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-home w-5"></i>
+                            <span>仪表盘</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="cluster-management.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-server w-5"></i>
+                            <span>集群管理</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="topic-management.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-stream w-5"></i>
+                            <span>主题管理</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="producer.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-paper-plane w-5"></i>
+                            <span>消息生产者</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="consumer.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-inbox w-5"></i>
+                            <span>消息消费者</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="consumer-group.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-users w-5"></i>
+                            <span>消费者组管理</span>
+                        </a>
+                    </li>
+                    
+                    <li>
+                        <a href="logs.html" class="menu-item active flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-history w-5"></i>
+                            <span>操作日志</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="settings.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-cog w-5"></i>
+                            <span>设置</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="mt-auto pt-4 border-t border-gray-700">
+                <div class="flex items-center justify-between text-sm text-gray-400">
+                    <span>版本: 1.0.0</span>
+                    <span>© 2023 EasyKafka</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6 overflow-y-auto">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold mb-2">操作日志</h2>
+                <p class="text-gray-400">查看和管理系统操作记录</p>
+            </div>
+
+            <!-- Filters -->
+            <div class="card p-6 mb-6">
+                <div class="flex flex-wrap items-center justify-between">
+                    <div class="flex flex-wrap mb-4 md:mb-0">
+                        <div class="filter-tag success active" data-type="success">
+                            <i class="fas fa-check-circle mr-1"></i> 成功
+                        </div>
+                        <div class="filter-tag error active" data-type="error">
+                            <i class="fas fa-times-circle mr-1"></i> 错误
+                        </div>
+                        <div class="filter-tag warning active" data-type="warning">
+                            <i class="fas fa-exclamation-circle mr-1"></i> 警告
+                        </div>
+                        <div class="filter-tag info active" data-type="info">
+                            <i class="fas fa-info-circle mr-1"></i> 信息
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <input type="text" placeholder="搜索日志..." class="search-box w-64">
+                            <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        </div>
+                        <button class="btn-primary">
+                            <i class="fas fa-sync-alt mr-2"></i> 刷新
+                        </button>
+                        <button class="btn-secondary">
+                            <i class="fas fa-download mr-2"></i> 导出
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Log Entries Table -->
+            <div class="card p-6 mb-6 overflow-x-auto">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th width="100">类型</th>
+                            <th width="180">时间</th>
+                            <th>标题</th>
+                            <th>描述</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr data-type="success">
+                            <td>
+                                <div class="log-type-icon success">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </td>
+                            <td>2023-11-15 14:30:25</td>
+                            <td>成功创建主题</td>
+                            <td>成功创建主题 "user-events"，分区数: 3，副本数: 2</td>
+
+                        </tr>
+                        <tr data-type="error">
+                            <td>
+                                <div class="log-type-icon error">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
+                            </td>
+                            <td>2023-11-15 14:25:10</td>
+                            <td>连接集群失败</td>
+                            <td>无法连接到集群 "production-cluster"，请检查网络连接和配置</td>
+
+                        </tr>
+                        <tr data-type="warning">
+                            <td>
+                                <div class="log-type-icon warning">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                </div>
+                            </td>
+                            <td>2023-11-15 14:20:45</td>
+                            <td>消费者组Lag过高</td>
+                            <td>消费者组 "analytics-consumer-group" 的Lag超过5000，可能影响数据处理</td>
+
+                        </tr>
+
+                        <tr data-type="info">
+                            <td>
+                                <div class="log-type-icon info">
+                                    <i class="fas fa-info-circle"></i>
+                                </div>
+                            </td>
+                            <td>2023-11-15 14:15:30</td>
+                            <td>系统启动</td>
+                            <td>EasyKafka系统已成功启动，版本: 1.0.0</td>
+
+                        </tr>
+
+                        <tr data-type="success">
+                            <td>
+                                <div class="log-type-icon success">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </td>
+                            <td>2023-11-15 14:10:15</td>
+                            <td>消息发送成功</td>
+                            <td>成功发送消息到主题 "order-events"，分区: 1，偏移量: 2456</td>
+
+                        </tr>
+                        <tr data-type="warning">
+                            <td>
+                                <div class="log-type-icon warning">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                </div>
+                            </td>
+                            <td>2023-11-15 14:05:00</td>
+                            <td>磁盘空间不足</td>
+                            <td>Broker 2 的磁盘使用率超过80%，请及时清理或扩容</td>
+
+                        </tr>
+                        <tr data-type="info">
+                            <td>
+                                <div class="log-type-icon info">
+                                    <i class="fas fa-info-circle"></i>
+                                </div>
+                            </td>
+                            <td>2023-11-15 14:00:45</td>
+                            <td>消费者组重平衡</td>
+                            <td>消费者组 "order-processing-group" 发生重平衡，成员: 3</td>
+
+                        </tr>
+
+                        <tr data-type="success">
+                            <td>
+                                <div class="log-type-icon success">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </td>
+                            <td>2023-11-15 13:55:30</td>
+                            <td>重置消费者组偏移量</td>
+                            <td>成功重置消费者组 "analytics-consumer-group" 的偏移量到最新</td>
+
+                        </tr>
+                        <tr data-type="error">
+                            <td>
+                                <div class="log-type-icon error">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
+                            </td>
+                            <td>2023-11-15 13:50:15</td>
+                            <td>删除主题失败</td>
+                            <td>无法删除主题 "system-events"，权限不足</td>
+
+                        </tr>
+                        <tr data-type="info">
+                            <td>
+                                <div class="log-type-icon info">
+                                    <i class="fas fa-info-circle"></i>
+                                </div>
+                            </td>
+                            <td>2023-11-15 13:45:00</td>
+                            <td>用户登录</td>
+                            <td>用户 "admin" 成功登录系统</td>
+
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination">
+                <button disabled>
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="active">1</button>
+                <button>2</button>
+                <button>3</button>
+                <button>4</button>
+                <button>5</button>
+                <button>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </main>
+    </div>
+
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i class="toast-icon fas"></i>
+        <div>
+            <div class="font-medium" id="toastTitle">通知</div>
+            <div class="text-sm text-gray-400" id="toastMessage">消息内容</div>
+        </div>
+    </div>
+
+    <script>
+        
+
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', function() {
+            this.classList.toggle('active');
+            // Here you would implement the actual theme switching logic
+        });
+
+        // Filter Tags
+        const filterTags = document.querySelectorAll('.filter-tag');
+        filterTags.forEach(tag => {
+            tag.addEventListener('click', function() {
+                this.classList.toggle('active');
+                filterLogs();
+            });
+        });
+
+        // Toggle log details
+document.querySelectorAll('.log-details-btn').forEach(button => {
+    button.addEventListener('click', function() {
+        const logRow = this.closest('tr');
+        const logType = logRow.getAttribute('data-type');
+        const detailsRow = document.querySelector(`.log-details-row[data-parent-type="${logType}"]`);
+        
+        if (detailsRow) {
+            detailsRow.classList.toggle('show');
+            const icon = this.querySelector('i');
+            if (detailsRow.classList.contains('show')) {
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            } else {
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            }
+        }
+    });
+});
+
+        // Search Logs
+        const searchBox = document.querySelector('.search-box');
+        searchBox.addEventListener('input', function() {
+            filterLogs();
+        });
+
+        // Filter Logs
+        function filterLogs() {
+            const activeFilters = Array.from(filterTags)
+                .filter(tag => tag.classList.contains('active'))
+                .map(tag => tag.dataset.type);
+            
+            const searchTerm = searchBox.value.toLowerCase();
+            
+            const logRows = document.querySelectorAll('tr[data-type]');
+            logRows.forEach(row => {
+                const type = row.getAttribute('data-type');
+                const text = row.textContent.toLowerCase();
+                
+                const matchesFilter = activeFilters.includes(type);
+                const matchesSearch = text.includes(searchTerm);
+                
+                if (matchesFilter && matchesSearch) {
+                    row.style.display = '';
+                    // Show corresponding details row if it exists
+                    const detailsRow = document.querySelector(`.log-details-row[data-parent-type="${type}"]`);
+                    if (detailsRow) {
+                        detailsRow.style.display = '';
+                    }
+                } else {
+                    row.style.display = 'none';
+                    // Hide corresponding details row if it exists
+                    const detailsRow = document.querySelector(`.log-details-row[data-parent-type="${type}"]`);
+                    if (detailsRow) {
+                        detailsRow.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        // Pagination
+        const prevPageBtn = document.querySelector('.pagination button:first-child');
+        const nextPageBtn = document.querySelector('.pagination button:last-child');
+        const pageButtons = document.querySelectorAll('.pagination button:not(:first-child):not(:last-child)');
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        
+        function updatePagination() {
+            const logRows = document.querySelectorAll('tr[data-type]');
+            const totalPages = Math.ceil(logRows.length / itemsPerPage);
+            
+            // Hide all log rows and details rows
+            logRows.forEach(row => {
+                row.style.display = 'none';
+                const logType = row.getAttribute('data-type');
+                const detailsRow = document.querySelector(`.log-details-row[data-parent-type="${logType}"]`);
+                if (detailsRow) {
+                    detailsRow.style.display = 'none';
+                }
+            });
+            
+            // Show only the current page's log rows
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, logRows.length);
+            
+            for (let i = startIndex; i < endIndex; i++) {
+                logRows[i].style.display = '';
+                const logType = logRows[i].getAttribute('data-type');
+                const detailsRow = document.querySelector(`.log-details-row[data-parent-type="${logType}"]`);
+                if (detailsRow) {
+                    detailsRow.style.display = '';
+                }
+            }
+            
+            // Update page buttons
+            pageButtons.forEach((button, index) => {
+                if (index + 1 === currentPage) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+            });
+            
+            // Update button states
+            if (prevPageBtn) {
+                prevPageBtn.disabled = currentPage === 1;
+            }
+            if (nextPageBtn) {
+                nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
+            }
+        }
+        
+        if (prevPageBtn) {
+            prevPageBtn.addEventListener('click', function() {
+                if (currentPage > 1) {
+                    currentPage--;
+                    updatePagination();
+                    showToast('info', '页面切换', `已切换到第 ${currentPage} 页`);
+                }
+            });
+        }
+        
+        if (nextPageBtn) {
+            nextPageBtn.addEventListener('click', function() {
+                const logRows = document.querySelectorAll('tr[data-type]');
+                const totalPages = Math.ceil(logRows.length / itemsPerPage);
+                
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    updatePagination();
+                    showToast('info', '页面切换', `已切换到第 ${currentPage} 页`);
+                }
+            });
+        }
+        
+        // Page number buttons
+        pageButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                currentPage = parseInt(this.textContent);
+                updatePagination();
+                showToast('info', '页面切换', `已切换到第 ${currentPage} 页`);
+            });
+        });
+        
+        // Initialize log details rows as hidden
+          document.querySelectorAll('.log-details-row').forEach(row => {
+              row.classList.add('hidden');
+          });
+          
+          // Initialize pagination
+          updatePagination();
+
+        // Refresh Button
+        const refreshButton = document.querySelector('.btn-primary');
+        refreshButton.addEventListener('click', function() {
+            showToast('info', '刷新日志', '正在刷新操作日志...');
+            
+            // Here you would implement the actual refresh logic
+            setTimeout(() => {
+                showToast('success', '刷新完成', '操作日志已更新');
+            }, 1000);
+        });
+
+        // Export Button
+        const exportButton = document.querySelector('.btn-secondary');
+        exportButton.addEventListener('click', function() {
+            showToast('info', '导出日志', '正在导出操作日志...');
+            
+            // Here you would implement the actual export logic
+            setTimeout(() => {
+                showToast('success', '导出完成', '操作日志已成功导出');
+            }, 1000);
+        });
+
+        // Toast Notification
+        function showToast(type, title, message) {
+            const toast = document.getElementById('toast');
+            const toastIcon = toast.querySelector('.toast-icon');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            // Set toast content
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+            
+            // Set toast type
+            toast.className = 'toast ' + type;
+            
+            // Set icon based on type
+            if (type === 'success') {
+                toastIcon.className = 'toast-icon fas fa-check-circle';
+            } else if (type === 'error') {
+                toastIcon.className = 'toast-icon fas fa-exclamation-circle';
+            } else if (type === 'info') {
+                toastIcon.className = 'toast-icon fas fa-info-circle';
+            } else if (type === 'warning') {
+                toastIcon.className = 'toast-icon fas fa-exclamation-circle';
+            }
+            
+            // Show toast
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+            
+            // Hide toast after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        
+    </script>
+</body>
+</html>

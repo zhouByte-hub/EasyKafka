@@ -1,0 +1,1754 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>消费者组管理 - EasyKafka</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --darker: #0f172a;
+            --light: #f1f5f9;
+            --lighter: #f8fafc;
+        }
+
+        body {
+            background-color: var(--darker);
+            color: var(--light);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .sidebar {
+            background: linear-gradient(180deg, var(--dark) 0%, rgba(30, 41, 59, 0.8) 100%);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-item {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: var(--primary);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .menu-item:hover::before, .menu-item.active::before {
+            transform: translateX(0);
+        }
+
+        .menu-item:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+            padding-left: 1.5rem;
+        }
+
+        .menu-item.active {
+            background-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(30, 41, 59, 0.5);
+            color: var(--light);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: var(--primary);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: var(--danger);
+        }
+
+        .btn-success {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-success:hover {
+            background: rgba(16, 185, 129, 0.3);
+            border-color: var(--success);
+        }
+
+        .btn-warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-warning:hover {
+            background: rgba(245, 158, 11, 0.3);
+            border-color: var(--warning);
+        }
+
+        .header {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            font-size: 1.5rem;
+        }
+
+        .connection-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--success);
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        .search-box {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            color: var(--light);
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .theme-toggle {
+            width: 50px;
+            height: 25px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 25px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle-slider {
+            position: absolute;
+            top: 2.5px;
+            left: 2.5px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle.active {
+            background: var(--primary);
+        }
+
+        .theme-toggle.active .theme-toggle-slider {
+            transform: translateX(25px);
+        }
+
+        
+
+        .footer {
+            background: rgba(15, 23, 42, 0.8);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--light);
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .form-select {
+            width: 100%;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--light);
+            transition: all 0.3s ease;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .tab:hover {
+            color: var(--primary);
+        }
+
+        .tab.active {
+            color: var(--primary);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .consumer-group-row {
+            transition: all 0.3s ease;
+        }
+
+        .consumer-group-row:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .status-badge.active {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .status-badge.stable {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .status-badge.warning {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .status-badge.error {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .lag-indicator {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .lag-indicator.low {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .lag-indicator.medium {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .lag-indicator.high {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--dark);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--success);
+        }
+
+        .toast.error {
+            border-left: 4px solid var(--danger);
+        }
+
+        .toast.info {
+            border-left: 4px solid var(--primary);
+        }
+
+        .toast.warning {
+            border-left: 4px solid var(--warning);
+        }
+
+        .toast-icon {
+            margin-right: 0.75rem;
+            font-size: 1.25rem;
+        }
+
+        .toast.success .toast-icon {
+            color: var(--success);
+        }
+
+        .toast.error .toast-icon {
+            color: var(--danger);
+        }
+
+        .toast.info .toast-icon {
+            color: var(--primary);
+        }
+
+        .toast.warning .toast-icon {
+            color: var(--warning);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--dark);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: flex-end;
+            space-x: 1rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+        }
+
+        .pagination-info {
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .member-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .member-card:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .partition-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .partition-card:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .partition-progress {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .partition-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            transition: width 0.3s ease;
+        }
+
+        .offset-reset-option {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .offset-reset-option:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: var(--primary);
+        }
+
+        .offset-reset-option.selected {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: var(--primary);
+        }
+
+        .confirm-dialog {
+            background: var(--dark);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .confirm-dialog-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .confirm-dialog-icon {
+            font-size: 1.5rem;
+            margin-right: 0.75rem;
+        }
+
+        .confirm-dialog-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        .confirm-dialog-body {
+            margin-bottom: 1.5rem;
+            color: #94a3b8;
+        }
+
+        .confirm-dialog-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+
+        /* 确保主内容区域滚动条正确显示 */
+        main {
+            height: calc(100vh - 80px);
+            overflow-y: auto !important;
+        }
+
+        /* 自定义滚动条样式 */
+        main::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        main::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 4px;
+        }
+
+        main::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.5);
+            border-radius: 4px;
+        }
+
+        main::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.8);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="header py-4 px-6 flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            <h1 class="logo">EasyKafka</h1>
+            <div class="flex items-center space-x-2">
+                <span class="connection-indicator"></span>
+                <span class="text-sm">已连接: localhost:9092</span>
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="theme-toggle" id="themeToggle">
+                <div class="theme-toggle-slider"></div>
+            </div>
+            <div class="relative">
+                <i class="fas fa-bell text-xl cursor-pointer"></i>
+                <span class="notification-badge">3</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <img src="https://picsum.photos/seed/user123/40/40.jpg" alt="用户头像" class="w-10 h-10 rounded-full">
+                <span>管理员</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-1">
+        <!-- Sidebar -->
+        <aside class="sidebar w-64 py-6 px-4 flex flex-col">
+            <nav class="flex-1">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="index.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-home w-5"></i>
+                            <span>仪表盘</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="cluster-management.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-server w-5"></i>
+                            <span>集群管理</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="topic-management.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-stream w-5"></i>
+                            <span>主题管理</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="producer.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-paper-plane w-5"></i>
+                            <span>消息生产者</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="consumer.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-inbox w-5"></i>
+                            <span>消息消费者</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="consumer-group.html" class="menu-item active flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-users w-5"></i>
+                            <span>消费者组管理</span>
+                        </a>
+                    </li>
+                    
+                    <li>
+                        <a href="logs.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-history w-5"></i>
+                            <span>操作日志</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="settings.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-cog w-5"></i>
+                            <span>设置</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="mt-auto pt-4 border-t border-gray-700">
+                <div class="flex items-center justify-between text-sm text-gray-400">
+                    <span>版本: 1.0.0</span>
+                    <span>© 2023 EasyKafka</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6 overflow-y-auto">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold mb-2">消费者组管理</h2>
+                <p class="text-gray-400">查看和管理Kafka消费者组</p>
+            </div>
+
+            <!-- Consumer Groups Overview -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <div class="card p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">消费者组总数</h3>
+                        <i class="fas fa-users text-blue-500 text-xl"></i>
+                    </div>
+                    <p class="text-3xl font-bold">12</p>
+                    <p class="text-sm text-gray-400 mt-2">+2 较上周</p>
+                </div>
+                <div class="card p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">活跃消费者组</h3>
+                        <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                    </div>
+                    <p class="text-3xl font-bold">8</p>
+                    <p class="text-sm text-gray-400 mt-2">67% 总数</p>
+                </div>
+                <div class="card p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">总Lag</h3>
+                        <i class="fas fa-clock text-yellow-500 text-xl"></i>
+                    </div>
+                    <p class="text-3xl font-bold">24,580</p>
+                    <p class="text-sm text-gray-400 mt-2">-1,200 较昨日</p>
+                </div>
+                <div class="card p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">消费者总数</h3>
+                        <i class="fas fa-user text-purple-500 text-xl"></i>
+                    </div>
+                    <p class="text-3xl font-bold">42</p>
+                    <p class="text-sm text-gray-400 mt-2">+5 较上周</p>
+                </div>
+            </div>
+
+            <!-- Consumer Groups List -->
+            <div class="card p-6 mb-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold">消费者组列表</h3>
+                    <div class="flex items-center space-x-3">
+                        <div class="relative">
+                            <input type="text" placeholder="搜索消费者组..." class="search-box w-64" id="groupSearch">
+                            <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        </div>
+                        <button class="btn-primary" id="refreshGroupsBtn">
+                            <i class="fas fa-sync-alt mr-2"></i>刷新
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="text-left text-gray-400 border-b border-gray-700">
+                                <th class="pb-3">消费者组</th>
+                                <th class="pb-3">状态</th>
+                                <th class="pb-3">协调器</th>
+                                <th class="pb-3">成员数</th>
+                                <th class="pb-3">主题数</th>
+                                <th class="pb-3">分区数</th>
+                                <th class="pb-3">总Lag</th>
+                                <th class="pb-3">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="groupsTableBody">
+                            <tr class="consumer-group-row border-b border-gray-700">
+                                <td class="py-3 font-medium">order-processing-group</td>
+                                <td class="py-3">
+                                    <span class="status-badge active">活跃</span>
+                                </td>
+                                <td class="py-3">broker-0:9092</td>
+                                <td class="py-3">3</td>
+                                <td class="py-3">2</td>
+                                <td class="py-3">10</td>
+                                <td class="py-3">
+                                    <span class="lag-indicator low">1,245</span>
+                                </td>
+                                <td class="py-3">
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-500 hover:text-blue-400" onclick="viewGroupDetails('order-processing-group')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="text-yellow-500 hover:text-yellow-400" onclick="resetGroupOffset('order-processing-group')">
+                                            <i class="fas fa-redo"></i>
+                                        </button>
+                                        <button class="text-red-500 hover:text-red-400" onclick="deleteGroup('order-processing-group')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="consumer-group-row border-b border-gray-700">
+                                <td class="py-3 font-medium">notification-service-group</td>
+                                <td class="py-3">
+                                    <span class="status-badge stable">稳定</span>
+                                </td>
+                                <td class="py-3">broker-1:9092</td>
+                                <td class="py-3">2</td>
+                                <td class="py-3">1</td>
+                                <td class="py-3">5</td>
+                                <td class="py-3">
+                                    <span class="lag-indicator low">320</span>
+                                </td>
+                                <td class="py-3">
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-500 hover:text-blue-400" onclick="viewGroupDetails('notification-service-group')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="text-yellow-500 hover:text-yellow-400" onclick="resetGroupOffset('notification-service-group')">
+                                            <i class="fas fa-redo"></i>
+                                        </button>
+                                        <button class="text-red-500 hover:text-red-400" onclick="deleteGroup('notification-service-group')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="consumer-group-row border-b border-gray-700">
+                                <td class="py-3 font-medium">analytics-consumer-group</td>
+                                <td class="py-3">
+                                    <span class="status-badge warning">警告</span>
+                                </td>
+                                <td class="py-3">broker-2:9092</td>
+                                <td class="py-3">1</td>
+                                <td class="py-3">3</td>
+                                <td class="py-3">15</td>
+                                <td class="py-3">
+                                    <span class="lag-indicator medium">8,450</span>
+                                </td>
+                                <td class="py-3">
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-500 hover:text-blue-400" onclick="viewGroupDetails('analytics-consumer-group')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="text-yellow-500 hover:text-yellow-400" onclick="resetGroupOffset('analytics-consumer-group')">
+                                            <i class="fas fa-redo"></i>
+                                        </button>
+                                        <button class="text-red-500 hover:text-red-400" onclick="deleteGroup('analytics-consumer-group')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="consumer-group-row border-b border-gray-700">
+                                <td class="py-3 font-medium">log-processor-group</td>
+                                <td class="py-3">
+                                    <span class="status-badge error">错误</span>
+                                </td>
+                                <td class="py-3">broker-0:9092</td>
+                                <td class="py-3">0</td>
+                                <td class="py-3">1</td>
+                                <td class="py-3">5</td>
+                                <td class="py-3">
+                                    <span class="lag-indicator high">14,565</span>
+                                </td>
+                                <td class="py-3">
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-500 hover:text-blue-400" onclick="viewGroupDetails('log-processor-group')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="text-yellow-500 hover:text-yellow-400" onclick="resetGroupOffset('log-processor-group')">
+                                            <i class="fas fa-redo"></i>
+                                        </button>
+                                        <button class="text-red-500 hover:text-red-400" onclick="deleteGroup('log-processor-group')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="consumer-group-row border-b border-gray-700">
+                                <td class="py-3 font-medium">payment-processor-group</td>
+                                <td class="py-3">
+                                    <span class="status-badge active">活跃</span>
+                                </td>
+                                <td class="py-3">broker-1:9092</td>
+                                <td class="py-3">4</td>
+                                <td class="py-3">2</td>
+                                <td class="py-3">8</td>
+                                <td class="py-3">
+                                    <span class="lag-indicator low">0</span>
+                                </td>
+                                <td class="py-3">
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-500 hover:text-blue-400" onclick="viewGroupDetails('payment-processor-group')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="text-yellow-500 hover:text-yellow-400" onclick="resetGroupOffset('payment-processor-group')">
+                                            <i class="fas fa-redo"></i>
+                                        </button>
+                                        <button class="text-red-500 hover:text-red-400" onclick="deleteGroup('payment-processor-group')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination">
+                    <div class="pagination-info">
+                        显示 1-5 条，共 12 条消费者组
+                    </div>
+                    <div class="pagination-controls">
+                        <button class="btn-secondary" id="prevPageBtn" disabled>
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="btn-secondary" id="nextPageBtn">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Consumer Group Details Section -->
+            <div class="card p-6" id="groupDetailsSection" style="display: none;">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold">消费者组详情: <span id="selectedGroupName">-</span></h3>
+                    <button class="btn-secondary" onclick="closeGroupDetails()">
+                        <i class="fas fa-times mr-2"></i>关闭
+                    </button>
+                </div>
+
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('overview')">概览</div>
+                    <div class="tab" onclick="switchTab('members')">成员</div>
+                    <div class="tab" onclick="switchTab('partitions')">分区</div>
+                    <div class="tab" onclick="switchTab('offsets')">偏移量</div>
+                    <div class="tab" onclick="switchTab('config')">配置</div>
+                </div>
+
+                <div class="tab-content active" id="overviewTab">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                            <h4 class="font-bold mb-3">基本信息</h4>
+                            <div class="space-y-2">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">消费者组ID:</span>
+                                    <span id="groupId">order-processing-group</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">状态:</span>
+                                    <span id="groupStatus"><span class="status-badge active">活跃</span></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">协调器:</span>
+                                    <span id="coordinator">broker-0:9092</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">协议类型:</span>
+                                    <span id="protocolType">consumer</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">协议:</span>
+                                    <span id="protocol">range</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                            <h4 class="font-bold mb-3">统计信息</h4>
+                            <div class="space-y-2">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">成员数:</span>
+                                    <span id="memberCount">3</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">主题数:</span>
+                                    <span id="topicCount">2</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">分区数:</span>
+                                    <span id="partitionCount">10</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">总Lag:</span>
+                                    <span id="totalLag">1,245</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">创建时间:</span>
+                                    <span id="createTime">2023-05-15 10:30:45</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg mb-6">
+                        <h4 class="font-bold mb-3">Lag趋势</h4>
+                        <div class="chart-container">
+                            <canvas id="lagTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="membersTab">
+                    <div id="membersList">
+                        <div class="member-card">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="font-bold">消费者实例 #1</h4>
+                                <span class="status-badge active">活跃</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-gray-400 text-sm mb-1">客户端ID</p>
+                                    <p>consumer-1-5f8a9b3c</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-400 text-sm mb-1">主机</p>
+                                    <p>192.168.1.101:9092</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-400 text-sm mb-1">分配的主题</p>
+                                    <p>order-events (3), payment-events (2)</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-400 text-sm mb-1">心跳时间</p>
+                                    <p>2023-10-15 14:25:30</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="member-card">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="font-bold">消费者实例 #2</h4>
+                                <span class="status-badge active">活跃</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-gray-400 text-sm mb-1">客户端ID</p>
+                                    <p>consumer-2-a7b4c9d1</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-400 text-sm mb-1">主机</p>
+                                    <p>192.168.1.102:9092</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-400 text-sm mb-1">分配的主题</p>
+                                    <p>order-events (3), payment-events (2)</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-400 text-sm mb-1">心跳时间</p>
+                                    <p>2023-10-15 14:25:28</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="member-card">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="font-bold">消费者实例 #3</h4>
+                                <span class="status-badge active">活跃</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-gray-400 text-sm mb-1">客户端ID</p>
+                                    <p>consumer-3-e2f5g8h2</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-400 text-sm mb-1">主机</p>
+                                    <p>192.168.1.103:9092</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-400 text-sm mb-1">分配的主题</p>
+                                    <p>order-events (2), payment-events (0)</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-400 text-sm mb-1">心跳时间</p>
+                                    <p>2023-10-15 14:25:32</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="partitionsTab">
+                    <div id="partitionsList">
+                        <h4 class="font-bold mb-3">order-events</h4>
+                        <div class="partition-card">
+                            <div class="flex justify-between items-center mb-2">
+                                <span>分区 0</span>
+                                <span class="lag-indicator low">Lag: 125</span>
+                            </div>
+                            <div class="partition-progress">
+                                <div class="partition-progress-bar" style="width: 75%;"></div>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-400 mt-1">
+                                <span>当前偏移量: 4,875</span>
+                                <span>结束偏移量: 5,000</span>
+                                <span>消费者: consumer-1-5f8a9b3c</span>
+                            </div>
+                        </div>
+                        <div class="partition-card">
+                            <div class="flex justify-between items-center mb-2">
+                                <span>分区 1</span>
+                                <span class="lag-indicator low">Lag: 85</span>
+                            </div>
+                            <div class="partition-progress">
+                                <div class="partition-progress-bar" style="width: 90%;"></div>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-400 mt-1">
+                                <span>当前偏移量: 3,915</span>
+                                <span>结束偏移量: 4,000</span>
+                                <span>消费者: consumer-2-a7b4c9d1</span>
+                            </div>
+                        </div>
+                        <div class="partition-card">
+                            <div class="flex justify-between items-center mb-2">
+                                <span>分区 2</span>
+                                <span class="lag-indicator low">Lag: 210</span>
+                            </div>
+                            <div class="partition-progress">
+                                <div class="partition-progress-bar" style="width: 60%;"></div>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-400 mt-1">
+                                <span>当前偏移量: 2,790</span>
+                                <span>结束偏移量: 3,000</span>
+                                <span>消费者: consumer-3-e2f5g8h2</span>
+                            </div>
+                        </div>
+                        <div class="partition-card">
+                            <div class="flex justify-between items-center mb-2">
+                                <span>分区 3</span>
+                                <span class="lag-indicator low">Lag: 45</span>
+                            </div>
+                            <div class="partition-progress">
+                                <div class="partition-progress-bar" style="width: 95%;"></div>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-400 mt-1">
+                                <span>当前偏移量: 1,955</span>
+                                <span>结束偏移量: 2,000</span>
+                                <span>消费者: consumer-1-5f8a9b3c</span>
+                            </div>
+                        </div>
+                        <div class="partition-card">
+                            <div class="flex justify-between items-center mb-2">
+                                <span>分区 4</span>
+                                <span class="lag-indicator low">Lag: 180</span>
+                            </div>
+                            <div class="partition-progress">
+                                <div class="partition-progress-bar" style="width: 70%;"></div>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-400 mt-1">
+                                <span>当前偏移量: 2,820</span>
+                                <span>结束偏移量: 3,000</span>
+                                <span>消费者: consumer-2-a7b4c9d1</span>
+                            </div>
+                        </div>
+
+                        <h4 class="font-bold mb-3 mt-6">payment-events</h4>
+                        <div class="partition-card">
+                            <div class="flex justify-between items-center mb-2">
+                                <span>分区 0</span>
+                                <span class="lag-indicator low">Lag: 320</span>
+                            </div>
+                            <div class="partition-progress">
+                                <div class="partition-progress-bar" style="width: 50%;"></div>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-400 mt-1">
+                                <span>当前偏移量: 1,680</span>
+                                <span>结束偏移量: 2,000</span>
+                                <span>消费者: consumer-3-e2f5g8h2</span>
+                            </div>
+                        </div>
+                        <div class="partition-card">
+                            <div class="flex justify-between items-center mb-2">
+                                <span>分区 1</span>
+                                <span class="lag-indicator low">Lag: 180</span>
+                            </div>
+                            <div class="partition-progress">
+                                <div class="partition-progress-bar" style="width: 70%;"></div>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-400 mt-1">
+                                <span>当前偏移量: 1,820</span>
+                                <span>结束偏移量: 2,000</span>
+                                <span>消费者: consumer-1-5f8a9b3c</span>
+                            </div>
+                        </div>
+                        <div class="partition-card">
+                            <div class="flex justify-between items-center mb-2">
+                                <span>分区 2</span>
+                                <span class="lag-indicator low">Lag: 100</span>
+                            </div>
+                            <div class="partition-progress">
+                                <div class="partition-progress-bar" style="width: 85%;"></div>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-400 mt-1">
+                                <span>当前偏移量: 1,900</span>
+                                <span>结束偏移量: 2,000</span>
+                                <span>消费者: consumer-2-a7b4c9d1</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="offsetsTab">
+                    <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg mb-6">
+                        <h4 class="font-bold mb-3">偏移量重置</h4>
+                        <p class="text-gray-400 mb-4">选择重置偏移量的方式</p>
+                        <div class="space-y-3">
+                            <div class="offset-reset-option" onclick="selectOffsetReset('earliest')">
+                                <div class="flex items-center">
+                                    <input type="radio" name="offsetReset" id="resetEarliest" class="mr-3">
+                                    <label for="resetEarliest">重置到最早偏移量</label>
+                                </div>
+                                <p class="text-sm text-gray-400 ml-6">将消费者组的偏移量重置到每个分区的最早可用偏移量</p>
+                            </div>
+                            <div class="offset-reset-option" onclick="selectOffsetReset('latest')">
+                                <div class="flex items-center">
+                                    <input type="radio" name="offsetReset" id="resetLatest" class="mr-3">
+                                    <label for="resetLatest">重置到最新偏移量</label>
+                                </div>
+                                <p class="text-sm text-gray-400 ml-6">将消费者组的偏移量重置到每个分区的最新偏移量</p>
+                            </div>
+                            <div class="offset-reset-option" onclick="selectOffsetReset('timestamp')">
+                                <div class="flex items-center">
+                                    <input type="radio" name="offsetReset" id="resetTimestamp" class="mr-3">
+                                    <label for="resetTimestamp">按时间戳重置</label>
+                                </div>
+                                <p class="text-sm text-gray-400 ml-6">将消费者组的偏移量重置到指定时间戳后的第一条消息</p>
+                                <div class="ml-6 mt-2">
+                                    <input type="datetime-local" class="form-input w-full max-w-md" id="timestampInput">
+                                </div>
+                            </div>
+                            <div class="offset-reset-option" onclick="selectOffsetReset('shift')">
+                                <div class="flex items-center">
+                                    <input type="radio" name="offsetReset" id="resetShift" class="mr-3">
+                                    <label for="resetShift">按偏移量位移重置</label>
+                                </div>
+                                <p class="text-sm text-gray-400 ml-6">将消费者组的偏移量向前或向后移动指定数量</p>
+                                <div class="ml-6 mt-2 flex items-center">
+                                    <input type="number" class="form-input w-32" id="shiftInput" placeholder="位移量">
+                                    <select class="form-select ml-2 w-32" id="shiftDirection">
+                                        <option value="forward">向前</option>
+                                        <option value="backward">向后</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-end mt-6">
+                            <button class="btn-secondary mr-3" onclick="cancelOffsetReset()">取消</button>
+                            <button class="btn-primary" onclick="confirmOffsetReset()">确认重置</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                        <h4 class="font-bold mb-3">偏移量历史</h4>
+                        <div class="chart-container">
+                            <canvas id="offsetHistoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="configTab">
+                    <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                        <h4 class="font-bold mb-3">消费者组配置</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="text-left text-gray-400 border-b border-gray-700">
+                                        <th class="pb-3">配置项</th>
+                                        <th class="pb-3">值</th>
+                                        <th class="pb-3">默认值</th>
+                                        <th class="pb-3">描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-gray-700">
+                                        <td class="py-3 font-mono text-sm">group.id</td>
+                                        <td class="py-3">order-processing-group</td>
+                                        <td class="py-3">-</td>
+                                        <td class="py-3">消费者组的唯一标识</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-700">
+                                        <td class="py-3 font-mono text-sm">enable.auto.commit</td>
+                                        <td class="py-3">true</td>
+                                        <td class="py-3">true</td>
+                                        <td class="py-3">是否自动提交偏移量</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-700">
+                                        <td class="py-3 font-mono text-sm">auto.commit.interval.ms</td>
+                                        <td class="py-3">5000</td>
+                                        <td class="py-3">5000</td>
+                                        <td class="py-3">自动提交偏移量的时间间隔(毫秒)</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-700">
+                                        <td class="py-3 font-mono text-sm">session.timeout.ms</td>
+                                        <td class="py-3">10000</td>
+                                        <td class="py-3">10000</td>
+                                        <td class="py-3">消费者会话超时时间(毫秒)</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-700">
+                                        <td class="py-3 font-mono text-sm">heartbeat.interval.ms</td>
+                                        <td class="py-3">3000</td>
+                                        <td class="py-3">3000</td>
+                                        <td class="py-3">心跳发送间隔(毫秒)</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-700">
+                                        <td class="py-3 font-mono text-sm">max.poll.records</td>
+                                        <td class="py-3">500</td>
+                                        <td class="py-3">500</td>
+                                        <td class="py-3">单次poll返回的最大记录数</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-700">
+                                        <td class="py-3 font-mono text-sm">auto.offset.reset</td>
+                                        <td class="py-3">latest</td>
+                                        <td class="py-3">latest</td>
+                                        <td class="py-3">偏移量重置策略</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-700">
+                                        <td class="py-3 font-mono text-sm">fetch.min.bytes</td>
+                                        <td class="py-3">1</td>
+                                        <td class="py-3">1</td>
+                                        <td class="py-3">服务器获取的最小字节数</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-700">
+                                        <td class="py-3 font-mono text-sm">fetch.max.wait.ms</td>
+                                        <td class="py-3">500</td>
+                                        <td class="py-3">500</td>
+                                        <td class="py-3">服务器等待的最大时间(毫秒)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+    
+
+    <!-- Delete Group Confirmation Modal -->
+    <div id="deleteGroupModal" class="modal">
+        <div class="confirm-dialog">
+            <div class="confirm-dialog-header">
+                <i class="fas fa-exclamation-triangle text-yellow-500 confirm-dialog-icon"></i>
+                <div class="confirm-dialog-title">确认删除消费者组</div>
+            </div>
+            <div class="confirm-dialog-body">
+                <p>您确定要删除消费者组 "<span id="deleteGroupName">-</span>" 吗？</p>
+                <p class="mt-2">此操作不可撤销，删除后所有相关的偏移量信息将丢失。</p>
+            </div>
+            <div class="confirm-dialog-footer">
+                <button class="btn-secondary" onclick="closeDeleteGroupModal()">取消</button>
+                <button class="btn-danger" onclick="confirmDeleteGroup()">确认删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Offset Confirmation Modal -->
+    <div id="resetOffsetModal" class="modal">
+        <div class="confirm-dialog">
+            <div class="confirm-dialog-header">
+                <i class="fas fa-redo text-yellow-500 confirm-dialog-icon"></i>
+                <div class="confirm-dialog-title">确认重置偏移量</div>
+            </div>
+            <div class="confirm-dialog-body">
+                <p>您确定要重置消费者组 "<span id="resetOffsetGroupName">-</span>" 的偏移量吗？</p>
+                <p class="mt-2">重置方式: <span id="resetOffsetMethod">-</span></p>
+                <p class="mt-2">此操作将影响消费者组的消费位置，请谨慎操作。</p>
+            </div>
+            <div class="confirm-dialog-footer">
+                <button class="btn-secondary" onclick="closeResetOffsetModal()">取消</button>
+                <button class="btn-warning" onclick="confirmResetOffset()">确认重置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i class="toast-icon fas"></i>
+        <div>
+            <div class="font-medium" id="toastTitle">通知</div>
+            <div class="text-sm text-gray-400" id="toastMessage">消息内容</div>
+        </div>
+    </div>
+
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', function() {
+            this.classList.toggle('active');
+            // Here you would implement the actual theme switching logic
+        });
+
+        // Group Search
+        const groupSearch = document.getElementById('groupSearch');
+        groupSearch.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#groupsTableBody tr');
+            
+            rows.forEach(row => {
+                const groupName = row.cells[0].textContent.toLowerCase();
+                if (groupName.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+
+        // Refresh Groups
+        document.getElementById('refreshGroupsBtn').addEventListener('click', function() {
+            showToast('info', '刷新消费者组', '正在刷新消费者组列表...');
+            // Here you would implement the actual refresh logic
+            setTimeout(() => {
+                showToast('success', '刷新完成', '消费者组列表已更新');
+            }, 1000);
+        });
+
+        // View Group Details
+        function viewGroupDetails(groupName) {
+            document.getElementById('selectedGroupName').textContent = groupName;
+            document.getElementById('groupDetailsSection').style.display = 'block';
+            
+            // Scroll to the group details section
+            document.getElementById('groupDetailsSection').scrollIntoView({ behavior: 'smooth' });
+            
+            // Initialize charts
+            setTimeout(() => {
+                initializeLagTrendChart();
+                initializeOffsetHistoryChart();
+            }, 100);
+            
+            showToast('info', '查看消费者组详情', `正在查看消费者组 "${groupName}" 的详细信息`);
+        }
+
+        // Close Group Details
+        function closeGroupDetails() {
+            document.getElementById('groupDetailsSection').style.display = 'none';
+        }
+
+        // Switch Tab
+        function switchTab(tabName) {
+            // Update tab buttons
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update tab content
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+
+        // Initialize Lag Trend Chart
+        function initializeLagTrendChart() {
+            const ctx = document.getElementById('lagTrendChart').getContext('2d');
+            
+            // Check if chart already exists
+            if (window.lagTrendChart) {
+                window.lagTrendChart.destroy();
+            }
+            
+            window.lagTrendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                    datasets: [{
+                        label: 'Lag',
+                        data: [1200, 1100, 1300, 1450, 1245, 1100, 1245],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize Offset History Chart
+        function initializeOffsetHistoryChart() {
+            const ctx = document.getElementById('offsetHistoryChart').getContext('2d');
+            
+            // Check if chart already exists
+            if (window.offsetHistoryChart) {
+                window.offsetHistoryChart.destroy();
+            }
+            
+            window.offsetHistoryChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                    datasets: [{
+                        label: '当前偏移量',
+                        data: [10000, 12000, 15000, 18000, 21000, 24000, 27000],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: false
+                    }, {
+                        label: '结束偏移量',
+                        data: [11000, 13000, 16000, 19000, 22000, 25000, 28245],
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.4,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#94a3b8'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Reset Group Offset
+        let selectedGroupForReset = '';
+        function resetGroupOffset(groupName) {
+            selectedGroupForReset = groupName;
+            document.getElementById('resetOffsetGroupName').textContent = groupName;
+            document.getElementById('resetOffsetModal').classList.add('active');
+        }
+
+        function closeResetOffsetModal() {
+            document.getElementById('resetOffsetModal').classList.remove('active');
+        }
+
+        function confirmResetOffset() {
+            const selectedMethod = document.querySelector('input[name="offsetReset"]:checked');
+            if (!selectedMethod) {
+                showToast('warning', '请选择重置方式', '请选择一种偏移量重置方式');
+                return;
+            }
+            
+            const method = selectedMethod.value;
+            let methodText = '';
+            
+            switch(method) {
+                case 'earliest':
+                    methodText = '重置到最早偏移量';
+                    break;
+                case 'latest':
+                    methodText = '重置到最新偏移量';
+                    break;
+                case 'timestamp':
+                    methodText = '按时间戳重置';
+                    break;
+                case 'shift':
+                    methodText = '按偏移量位移重置';
+                    break;
+            }
+            
+            document.getElementById('resetOffsetMethod').textContent = methodText;
+            
+            // Close modal
+            closeResetOffsetModal();
+            
+            // Show toast
+            showToast('success', '偏移量重置成功', `消费者组 "${selectedGroupForReset}" 的偏移量已成功重置`);
+            
+            // Reset form
+            document.querySelectorAll('input[name="offsetReset"]').forEach(input => {
+                input.checked = false;
+            });
+            document.getElementById('timestampInput').value = '';
+            document.getElementById('shiftInput').value = '';
+            document.getElementById('shiftDirection').value = 'forward';
+        }
+
+        function cancelOffsetReset() {
+            document.querySelectorAll('input[name="offsetReset"]').forEach(input => {
+                input.checked = false;
+            });
+            document.getElementById('timestampInput').value = '';
+            document.getElementById('shiftInput').value = '';
+            document.getElementById('shiftDirection').value = 'forward';
+        }
+
+        function selectOffsetReset(method) {
+            document.getElementById(`reset${method.charAt(0).toUpperCase() + method.slice(1)}`).checked = true;
+        }
+
+        // Delete Group
+        let selectedGroupForDelete = '';
+        function deleteGroup(groupName) {
+            selectedGroupForDelete = groupName;
+            document.getElementById('deleteGroupName').textContent = groupName;
+            document.getElementById('deleteGroupModal').classList.add('active');
+        }
+
+        function closeDeleteGroupModal() {
+            document.getElementById('deleteGroupModal').classList.remove('active');
+        }
+
+        function confirmDeleteGroup() {
+            // Close modal
+            closeDeleteGroupModal();
+            
+            // Show toast
+            showToast('success', '删除成功', `消费者组 "${selectedGroupForDelete}" 已成功删除`);
+            
+            // Here you would implement the actual delete logic
+            // For demo purposes, we'll just reload the page
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        }
+
+        // Modal Close on Outside Click
+        document.getElementById('deleteGroupModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDeleteGroupModal();
+            }
+        });
+
+        document.getElementById('resetOffsetModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeResetOffsetModal();
+            }
+        });
+
+        // Toast Notification
+        function showToast(type, title, message) {
+            const toast = document.getElementById('toast');
+            const toastIcon = toast.querySelector('.toast-icon');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            // Set toast content
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+            
+            // Set toast type
+            toast.className = 'toast ' + type;
+            
+            // Set icon based on type
+            if (type === 'success') {
+                toastIcon.className = 'toast-icon fas fa-check-circle';
+            } else if (type === 'error') {
+                toastIcon.className = 'toast-icon fas fa-exclamation-circle';
+            } else if (type === 'info') {
+                toastIcon.className = 'toast-icon fas fa-info-circle';
+            } else if (type === 'warning') {
+                toastIcon.className = 'toast-icon fas fa-exclamation-circle';
+            }
+            
+            // Show toast
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+            
+            // Hide toast after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        
+    </script>
+</body>
+</html>

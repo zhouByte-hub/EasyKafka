@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>消息生产者 - EasyKafka</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --darker: #0f172a;
+            --light: #f1f5f9;
+            --lighter: #f8fafc;
+        }
+
+        body {
+            background-color: var(--darker);
+            color: var(--light);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .sidebar {
+            background: linear-gradient(180deg, var(--dark) 0%, rgba(30, 41, 59, 0.8) 100%);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-item {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: var(--primary);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .menu-item:hover::before, .menu-item.active::before {
+            transform: translateX(0);
+        }
+
+        .menu-item:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+            padding-left: 1.5rem;
+        }
+
+        .menu-item.active {
+            background-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(30, 41, 59, 0.5);
+            color: var(--light);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: var(--primary);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: var(--danger);
+        }
+
+        .header {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            font-size: 1.5rem;
+        }
+
+        .connection-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--success);
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        .search-box {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            color: var(--light);
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .theme-toggle {
+            width: 50px;
+            height: 25px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 25px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle-slider {
+            position: absolute;
+            top: 2.5px;
+            left: 2.5px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle.active .theme-toggle-slider {
+            transform: translateX(25px);
+        }
+
+        
+
+        .theme-toggle.active {
+            background: var(--primary);
+        }
+
+        .theme-toggle.active .theme-toggle-slider {
+            transform: translateX(25px);
+        }
+
+        .footer {
+            background: rgba(15, 23, 42, 0.8);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--light);
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .form-select {
+            width: 100%;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--light);
+            transition: all 0.3s ease;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .form-textarea {
+            width: 100%;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--light);
+            transition: all 0.3s ease;
+            resize: vertical;
+            min-height: 200px;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .tab:hover {
+            color: var(--primary);
+        }
+
+        .tab.active {
+            color: var(--primary);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .CodeMirror {
+            height: 200px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .history-item {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .history-item:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .header-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-key {
+            flex: 1;
+            margin-right: 0.5rem;
+        }
+
+        .header-value {
+            flex: 2;
+            margin-right: 0.5rem;
+        }
+
+        .header-actions {
+            width: 50px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--dark);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--success);
+        }
+
+        .toast.error {
+            border-left: 4px solid var(--danger);
+        }
+
+        .toast-icon {
+            margin-right: 0.75rem;
+            font-size: 1.25rem;
+        }
+
+        .toast.success .toast-icon {
+            color: var(--success);
+        }
+
+        .toast.error .toast-icon {
+            color: var(--danger);
+        }
+
+        .format-selector {
+            display: flex;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .format-option {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .format-option:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .format-option.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .batch-options {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .batch-toggle {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .batch-toggle input {
+            margin-right: 0.5rem;
+        }
+
+        .delay-options {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .delay-toggle {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .delay-toggle input {
+            margin-right: 0.5rem;
+        }
+
+        /* 确保主内容区域滚动条正确显示 */
+        main {
+            height: calc(100vh - 80px); /* 减去头部高度 */
+            overflow-y: auto !important;
+        }
+
+        /* 自定义滚动条样式 */
+        main::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        main::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.3);
+            border-radius: 4px;
+        }
+
+        main::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.5);
+            border-radius: 4px;
+        }
+
+        main::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.8);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="header py-4 px-6 flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            <h1 class="logo">EasyKafka</h1>
+            <div class="flex items-center space-x-2">
+                <span class="connection-indicator"></span>
+                <span class="text-sm">已连接: localhost:9092</span>
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="theme-toggle" id="themeToggle">
+                <div class="theme-toggle-slider"></div>
+            </div>
+            <div class="relative">
+                <i class="fas fa-bell text-xl cursor-pointer"></i>
+                <span class="notification-badge">3</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <img src="https://picsum.photos/seed/user123/40/40.jpg" alt="用户头像" class="w-10 h-10 rounded-full">
+                <span>管理员</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-1">
+        <!-- Sidebar -->
+        <aside class="sidebar w-64 py-6 px-4 flex flex-col" id="sidebar">
+            <nav class="flex-1">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="index.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-home w-5"></i>
+                            <span>仪表盘</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="cluster-management.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-server w-5"></i>
+                            <span>集群管理</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="topic-management.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-stream w-5"></i>
+                            <span>主题管理</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="producer.html" class="menu-item active flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-paper-plane w-5"></i>
+                            <span>消息生产者</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="consumer.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-inbox w-5"></i>
+                            <span>消息消费者</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="consumer-group.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-users w-5"></i>
+                            <span>消费者组管理</span>
+                        </a>
+                    </li>
+                    
+                    <li>
+                        <a href="logs.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-history w-5"></i>
+                            <span>操作日志</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="settings.html" class="menu-item flex items-center space-x-3 py-3 px-4 rounded-lg">
+                            <i class="fas fa-cog w-5"></i>
+                            <span>设置</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="mt-auto pt-4 border-t border-gray-700">
+                <div class="flex items-center justify-between text-sm text-gray-400">
+                    <span>版本: 1.0.0</span>
+                    <span>© 2023 EasyKafka</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6 overflow-y-auto">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold mb-2">消息生产者</h2>
+                <p class="text-gray-400">向Kafka主题发送消息</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Producer Form -->
+                <div class="lg:col-span-2">
+                    <div class="card p-6">
+                        <h3 class="text-xl font-bold mb-6">发送消息</h3>
+                        
+                        <form id="producerForm">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div class="form-group">
+                                    <label class="form-label">主题</label>
+                                    <select class="form-select" id="topicSelect" required>
+                                        <option value="">选择主题</option>
+                                        <option value="user-events">user-events</option>
+                                        <option value="order-events">order-events</option>
+                                        <option value="payment-events">payment-events</option>
+                                        <option value="notification-events">notification-events</option>
+                                        <option value="log-events">log-events</option>
+                                        <option value="analytics-events">analytics-events</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">分区 (可选)</label>
+                                    <select class="form-select" id="partitionSelect">
+                                        <option value="">自动选择</option>
+                                        <option value="0">分区 0</option>
+                                        <option value="1">分区 1</option>
+                                        <option value="2">分区 2</option>
+                                        <option value="3">分区 3</option>
+                                        <option value="4">分区 4</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group mb-6">
+                                <label class="form-label">Key (可选)</label>
+                                <input type="text" class="form-input" id="messageKey" placeholder="例如: user-12345">
+                            </div>
+
+                            <div class="form-group mb-6">
+                                <div class="flex justify-between items-center mb-2">
+                                    <label class="form-label">Value</label>
+                                    <div class="format-selector">
+                                        <div class="format-option active" data-format="text">Text</div>
+                                        <div class="format-option" data-format="json">JSON</div>
+                                        <div class="format-option" data-format="avro">AVRO</div>
+                                        <div class="format-option" data-format="protobuf">Protobuf</div>
+                                    </div>
+                                </div>
+                                <textarea class="form-textarea" id="messageValue" placeholder="输入消息内容..." required></textarea>
+                            </div>
+
+                            <div class="form-group mb-6">
+                                <div class="flex justify-between items-center mb-2">
+                                    <label class="form-label">Headers (可选)</label>
+                                    <button type="button" class="btn-secondary text-sm" id="addHeaderBtn">
+                                        <i class="fas fa-plus mr-1"></i>添加Header
+                                    </button>
+                                </div>
+                                <div id="headersContainer">
+                                    <div class="header-row">
+                                        <input type="text" class="form-input header-key" placeholder="Key">
+                                        <input type="text" class="form-input header-value" placeholder="Value">
+                                        <button type="button" class="btn-danger text-sm" onclick="removeHeader(this)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div class="batch-options">
+                                    <div class="batch-toggle">
+                                        <input type="checkbox" id="batchSend">
+                                        <label for="batchSend">批量发送</label>
+                                    </div>
+                                    <input type="number" class="form-input w-24" id="batchCount" value="10" min="1" disabled>
+                                    <span>条消息</span>
+                                </div>
+
+                                <div class="delay-options">
+                                    <div class="delay-toggle">
+                                        <input type="checkbox" id="delaySend">
+                                        <label for="delaySend">延迟发送</label>
+                                    </div>
+                                    <input type="number" class="form-input w-24" id="delayTime" value="1000" min="100" step="100" disabled>
+                                    <span>毫秒</span>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-end space-x-3">
+                                <button type="button" class="btn-secondary" id="clearFormBtn">
+                                    <i class="fas fa-eraser mr-2"></i>清空
+                                </button>
+                                <button type="submit" class="btn-primary">
+                                    <i class="fas fa-paper-plane mr-2"></i>发送消息
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- History Panel -->
+                <div class="lg:col-span-1">
+                    <div class="card p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-bold">发送历史</h3>
+                            <button class="btn-secondary text-sm" id="clearHistoryBtn">
+                                <i class="fas fa-trash mr-1"></i>清空
+                            </button>
+                        </div>
+                        
+                        <div class="space-y-3 max-h-[600px] overflow-y-auto" id="historyContainer">
+                            <div class="history-item p-3 rounded-lg border border-gray-700">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="font-medium">user-events</div>
+                                    <div class="text-xs text-gray-400">刚刚</div>
+                                </div>
+                                <div class="text-sm text-gray-400 mb-1">Key: user-12345</div>
+                                <div class="text-sm truncate">{"event":"login","userId":"12345","timestamp":"2023-11-20T14:32:15Z"}</div>
+                            </div>
+                            
+                            <div class="history-item p-3 rounded-lg border border-gray-700">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="font-medium">order-events</div>
+                                    <div class="text-xs text-gray-400">2分钟前</div>
+                                </div>
+                                <div class="text-sm text-gray-400 mb-1">Key: order-67890</div>
+                                <div class="text-sm truncate">{"event":"create","orderId":"67890","userId":"12345","amount":99.99}</div>
+                            </div>
+                            
+                            <div class="history-item p-3 rounded-lg border border-gray-700">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="font-medium">payment-events</div>
+                                    <div class="text-xs text-gray-400">5分钟前</div>
+                                </div>
+                                <div class="text-sm text-gray-400 mb-1">Key: payment-54321</div>
+                                <div class="text-sm truncate">{"event":"success","paymentId":"54321","orderId":"67890","amount":99.99}</div>
+                            </div>
+                            
+                            <div class="history-item p-3 rounded-lg border border-gray-700">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="font-medium">notification-events</div>
+                                    <div class="text-xs text-gray-400">10分钟前</div>
+                                </div>
+                                <div class="text-sm text-gray-400 mb-1">Key: notification-98765</div>
+                                <div class="text-sm truncate">{"event":"email","type":"order_confirmation","recipient":"user@example.com"}</div>
+                            </div>
+                            
+                            <div class="history-item p-3 rounded-lg border border-gray-700">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="font-medium">log-events</div>
+                                    <div class="text-xs text-gray-400">15分钟前</div>
+                                </div>
+                                <div class="text-sm text-gray-400 mb-1">Key: log-13579</div>
+                                <div class="text-sm truncate">{"level":"info","message":"User login successful","userId":"12345"}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Templates Section -->
+            <div class="card p-6 mt-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold">消息模板</h3>
+                    <button class="btn-secondary text-sm" id="saveTemplateBtn">
+                        <i class="fas fa-save mr-1"></i>保存为模板
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg border border-gray-700 cursor-pointer hover:border-blue-500 transition-all" onclick="loadTemplate('user-login')">
+                        <div class="font-medium mb-2">用户登录事件</div>
+                        <div class="text-sm text-gray-400">主题: user-events</div>
+                        <div class="text-sm text-gray-400 truncate mt-1">{"event":"login","userId":"...","timestamp":"..."}</div>
+                    </div>
+                    
+                    <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg border border-gray-700 cursor-pointer hover:border-blue-500 transition-all" onclick="loadTemplate('order-create')">
+                        <div class="font-medium mb-2">订单创建事件</div>
+                        <div class="text-sm text-gray-400">主题: order-events</div>
+                        <div class="text-sm text-gray-400 truncate mt-1">{"event":"create","orderId":"...","userId":"...","amount":...}</div>
+                    </div>
+                    
+                    <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg border border-gray-700 cursor-pointer hover:border-blue-500 transition-all" onclick="loadTemplate('payment-success')">
+                        <div class="font-medium mb-2">支付成功事件</div>
+                        <div class="text-sm text-gray-400">主题: payment-events</div>
+                        <div class="text-sm text-gray-400 truncate mt-1">{"event":"success","paymentId":"...","orderId":"...","amount":...}</div>
+                    </div>
+                    
+                    <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg border border-gray-700 cursor-pointer hover:border-blue-500 transition-all" onclick="loadTemplate('notification-email')">
+                        <div class="font-medium mb-2">邮件通知事件</div>
+                        <div class="text-sm text-gray-400">主题: notification-events</div>
+                        <div class="text-sm text-gray-400 truncate mt-1">{"event":"email","type":"...","recipient":"..."}</div>
+                    </div>
+                    
+                    <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg border border-gray-700 cursor-pointer hover:border-blue-500 transition-all" onclick="loadTemplate('log-info')">
+                        <div class="font-medium mb-2">日志信息事件</div>
+                        <div class="text-sm text-gray-400">主题: log-events</div>
+                        <div class="text-sm text-gray-400 truncate mt-1">{"level":"info","message":"...","userId":"..."}</div>
+                    </div>
+                    
+                    <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg border border-gray-700 cursor-pointer hover:border-blue-500 transition-all" onclick="loadTemplate('analytics-pageview')">
+                        <div class="font-medium mb-2">页面浏览事件</div>
+                        <div class="text-sm text-gray-400">主题: analytics-events</div>
+                        <div class="text-sm text-gray-400 truncate mt-1">{"event":"pageview","page":"...","userId":"...","timestamp":"..."}</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i class="toast-icon fas"></i>
+        <div>
+            <div class="font-medium" id="toastTitle">通知</div>
+            <div class="text-sm text-gray-400" id="toastMessage">消息内容</div>
+        </div>
+    </div>
+
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', function() {
+            this.classList.toggle('active');
+            // Here you would implement the actual theme switching logic
+        });
+
+        
+
+        // Format Selector
+        const formatOptions = document.querySelectorAll('.format-option');
+        formatOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                formatOptions.forEach(opt => opt.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Here you would change the editor mode based on the selected format
+                const format = this.getAttribute('data-format');
+                console.log('Selected format:', format);
+            });
+        });
+
+        // Headers Management
+        const addHeaderBtn = document.getElementById('addHeaderBtn');
+        const headersContainer = document.getElementById('headersContainer');
+
+        addHeaderBtn.addEventListener('click', function() {
+            const headerRow = document.createElement('div');
+            headerRow.className = 'header-row';
+            headerRow.innerHTML = `
+                <input type="text" class="form-input header-key" placeholder="Key">
+                <input type="text" class="form-input header-value" placeholder="Value">
+                <button type="button" class="btn-danger text-sm" onclick="removeHeader(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            headersContainer.appendChild(headerRow);
+        });
+
+        function removeHeader(button) {
+            button.parentElement.remove();
+        }
+
+        // Batch Send Toggle
+        const batchSend = document.getElementById('batchSend');
+        const batchCount = document.getElementById('batchCount');
+
+        batchSend.addEventListener('change', function() {
+            batchCount.disabled = !this.checked;
+        });
+
+        // Delay Send Toggle
+        const delaySend = document.getElementById('delaySend');
+        const delayTime = document.getElementById('delayTime');
+
+        delaySend.addEventListener('change', function() {
+            delayTime.disabled = !this.checked;
+        });
+
+        // Producer Form
+        const producerForm = document.getElementById('producerForm');
+        const clearFormBtn = document.getElementById('clearFormBtn');
+
+        producerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Collect form data
+            const formData = {
+                topic: document.getElementById('topicSelect').value,
+                partition: document.getElementById('partitionSelect').value,
+                key: document.getElementById('messageKey').value,
+                value: document.getElementById('messageValue').value,
+                headers: [],
+                batchSend: batchSend.checked,
+                batchCount: batchCount.value,
+                delaySend: delaySend.checked,
+                delayTime: delayTime.value
+            };
+
+            // Collect headers
+            const headerRows = headersContainer.querySelectorAll('.header-row');
+            headerRows.forEach(row => {
+                const key = row.querySelector('.header-key').value;
+                const value = row.querySelector('.header-value').value;
+                if (key && value) {
+                    formData.headers.push({ key, value });
+                }
+            });
+
+            console.log('Sending message:', formData);
+            
+            // Here you would actually send the message to Kafka
+            
+            // Show success toast
+            showToast('success', '发送成功', `消息已成功发送到主题 "${formData.topic}"`);
+            
+            // Add to history
+            addToHistory(formData);
+            
+            // If batch send is enabled, show a different message
+            if (formData.batchSend) {
+                showToast('success', '批量发送成功', `已成功发送 ${formData.batchCount} 条消息到主题 "${formData.topic}"`);
+            }
+        });
+
+        clearFormBtn.addEventListener('click', function() {
+            producerForm.reset();
+            
+            // Reset headers to just one empty row
+            headersContainer.innerHTML = `
+                <div class="header-row">
+                    <input type="text" class="form-input header-key" placeholder="Key">
+                    <input type="text" class="form-input header-value" placeholder="Value">
+                    <button type="button" class="btn-danger text-sm" onclick="removeHeader(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            
+            // Reset toggles
+            batchSend.checked = false;
+            batchCount.disabled = true;
+            delaySend.checked = false;
+            delayTime.disabled = true;
+            
+            // Reset format selector
+            formatOptions.forEach(opt => opt.classList.remove('active'));
+            formatOptions[0].classList.add('active');
+        });
+
+        // History Management
+        const historyContainer = document.getElementById('historyContainer');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+        function addToHistory(messageData) {
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item p-3 rounded-lg border border-gray-700';
+            
+            const time = new Date().toLocaleTimeString();
+            
+            historyItem.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <div class="font-medium">${messageData.topic}</div>
+                    <div class="text-xs text-gray-400">刚刚</div>
+                </div>
+                <div class="text-sm text-gray-400 mb-1">Key: ${messageData.key || '无'}</div>
+                <div class="text-sm truncate">${messageData.value}</div>
+            `;
+            
+            // Add to the top of the history
+            historyContainer.insertBefore(historyItem, historyContainer.firstChild);
+            
+            // Limit history to 20 items
+            while (historyContainer.children.length > 20) {
+                historyContainer.removeChild(historyContainer.lastChild);
+            }
+            
+            // Add click event to load the message data back into the form
+            historyItem.addEventListener('click', function() {
+                loadFromHistory(messageData);
+            });
+        }
+
+        function loadFromHistory(messageData) {
+            // Populate form with history data
+            document.getElementById('topicSelect').value = messageData.topic;
+            document.getElementById('partitionSelect').value = messageData.partition || '';
+            document.getElementById('messageKey').value = messageData.key || '';
+            document.getElementById('messageValue').value = messageData.value;
+            
+            // Clear and populate headers
+            headersContainer.innerHTML = '';
+            if (messageData.headers && messageData.headers.length > 0) {
+                messageData.headers.forEach(header => {
+                    const headerRow = document.createElement('div');
+                    headerRow.className = 'header-row';
+                    headerRow.innerHTML = `
+                        <input type="text" class="form-input header-key" placeholder="Key" value="${header.key}">
+                        <input type="text" class="form-input header-value" placeholder="Value" value="${header.value}">
+                        <button type="button" class="btn-danger text-sm" onclick="removeHeader(this)">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                    headersContainer.appendChild(headerRow);
+                });
+            } else {
+                // Add one empty header row
+                addHeaderBtn.click();
+                headersContainer.removeChild(headersContainer.lastChild);
+            }
+            
+            // Scroll to top of the form
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        clearHistoryBtn.addEventListener('click', function() {
+            if (confirm('确定要清空发送历史吗？')) {
+                historyContainer.innerHTML = '';
+            }
+        });
+
+        // Templates
+        const saveTemplateBtn = document.getElementById('saveTemplateBtn');
+        
+        saveTemplateBtn.addEventListener('click', function() {
+            const templateName = prompt('请输入模板名称:');
+            if (templateName) {
+                // Here you would save the current form data as a template
+                showToast('success', '模板已保存', `模板 "${templateName}" 已保存`);
+            }
+        });
+
+        function loadTemplate(templateName) {
+            // Here you would load the template data and populate the form
+            console.log('Loading template:', templateName);
+            
+            // For demo purposes, we'll just show a toast
+            showToast('success', '模板已加载', `模板 "${templateName}" 已加载到表单`);
+            
+            // In a real implementation, you would populate the form with the template data
+            // For example:
+            switch(templateName) {
+                case 'user-login':
+                    document.getElementById('topicSelect').value = 'user-events';
+                    document.getElementById('messageKey').value = 'user-12345';
+                    document.getElementById('messageValue').value = '{"event":"login","userId":"12345","timestamp":"2023-11-20T14:32:15Z"}';
+                    break;
+                case 'order-create':
+                    document.getElementById('topicSelect').value = 'order-events';
+                    document.getElementById('messageKey').value = 'order-67890';
+                    document.getElementById('messageValue').value = '{"event":"create","orderId":"67890","userId":"12345","amount":99.99}';
+                    break;
+                case 'payment-success':
+                    document.getElementById('topicSelect').value = 'payment-events';
+                    document.getElementById('messageKey').value = 'payment-54321';
+                    document.getElementById('messageValue').value = '{"event":"success","paymentId":"54321","orderId":"67890","amount":99.99}';
+                    break;
+                case 'notification-email':
+                    document.getElementById('topicSelect').value = 'notification-events';
+                    document.getElementById('messageKey').value = 'notification-98765';
+                    document.getElementById('messageValue').value = '{"event":"email","type":"order_confirmation","recipient":"user@example.com"}';
+                    break;
+                case 'log-info':
+                    document.getElementById('topicSelect').value = 'log-events';
+                    document.getElementById('messageKey').value = 'log-13579';
+                    document.getElementById('messageValue').value = '{"level":"info","message":"User login successful","userId":"12345"}';
+                    break;
+                case 'analytics-pageview':
+                    document.getElementById('topicSelect').value = 'analytics-events';
+                    document.getElementById('messageKey').value = 'pageview-24680';
+                    document.getElementById('messageValue').value = '{"event":"pageview","page":"/dashboard","userId":"12345","timestamp":"2023-11-20T14:32:15Z"}';
+                    break;
+            }
+            
+            // Scroll to top of the form
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Toast Notification
+        function showToast(type, title, message) {
+            const toast = document.getElementById('toast');
+            const toastIcon = toast.querySelector('.toast-icon');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            // Set toast content
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+            
+            // Set toast type
+            toast.className = 'toast ' + type;
+            
+            // Set icon based on type
+            if (type === 'success') {
+                toastIcon.className = 'toast-icon fas fa-check-circle';
+            } else if (type === 'error') {
+                toastIcon.className = 'toast-icon fas fa-exclamation-circle';
+            }
+            
+            // Show toast
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+            
+            // Hide toast after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+    </script>
+</body>
+</html>
