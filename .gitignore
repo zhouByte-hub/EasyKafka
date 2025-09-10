@@ -3,7 +3,6 @@ target
 **/*.rs.bk
 *.pdb
 **/mutants.out*/
-
 # Logs
 logs
 *.log
