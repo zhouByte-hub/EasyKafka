@@ -495,6 +495,111 @@
         main::-webkit-scrollbar-thumb:hover {
             background: rgba(59, 130, 246, 0.8);
         }
+        
+        /* Light Theme Styles */
+        body.light-theme {
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        
+        body.light-theme .sidebar {
+            background: linear-gradient(180deg, #f1f5f9 0%, rgba(241, 245, 249, 0.8) 100%);
+            border-right: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .menu-item:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+        
+        body.light-theme .menu-item.active {
+            background-color: rgba(59, 130, 246, 0.2);
+        }
+        
+        body.light-theme .card {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .header {
+            background: rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .search-box {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+        
+        body.light-theme .theme-toggle {
+            background: rgba(226, 232, 240, 0.8);
+        }
+        
+        body.light-theme .form-input {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+        
+        body.light-theme .form-select {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+        
+        body.light-theme .form-textarea {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+        
+        body.light-theme .modal-content {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .confirm-content {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .filter-dropdown-content {
+            background-color: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .filter-dropdown-content a {
+            color: #1e293b;
+        }
+        
+        body.light-theme .filter-dropdown-content a:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+        
+        body.light-theme main::-webkit-scrollbar-track {
+            background: rgba(226, 232, 240, 0.8);
+        }
+        
+        body.light-theme .footer {
+            background: rgba(255, 255, 255, 0.8);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .border-gray-700 {
+            border-color: rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        body.light-theme .text-gray-400 {
+            color: #64748b !important;
+        }
+        
+        body.light-theme .text-gray-500 {
+            color: #64748b !important;
+        }
+        
+        body.light-theme .border-t {
+            border-color: rgba(0, 0, 0, 0.1) !important;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -1165,9 +1270,24 @@
     <script>
         // Theme Toggle
         const themeToggle = document.getElementById('themeToggle');
+        
+        // Check for saved theme preference or default to dark theme
+        const currentTheme = localStorage.getItem('theme') || 'dark';
+        if (currentTheme === 'light') {
+            document.body.classList.add('light-theme');
+            themeToggle.classList.add('active');
+        }
+        
         themeToggle.addEventListener('click', function() {
             this.classList.toggle('active');
-            // Here you would implement the actual theme switching logic
+            document.body.classList.toggle('light-theme');
+            
+            // Save theme preference
+            const theme = document.body.classList.contains('light-theme') ? 'light' : 'dark';
+            localStorage.setItem('theme', theme);
+            
+            // Show toast notification
+            showToast('success', '主题切换', `已切换到${theme === 'light' ? '浅色' : '深色'}主题`);
         });
 
         

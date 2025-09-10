@@ -648,6 +648,112 @@
         main::-webkit-scrollbar-thumb:hover {
             background: rgba(59, 130, 246, 0.8);
         }
+        
+        /* Light Theme Styles */
+        body.light-theme {
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        
+        body.light-theme .sidebar {
+            background: linear-gradient(180deg, #f1f5f9 0%, rgba(241, 245, 249, 0.8) 100%);
+            border-right: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .menu-item:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+        
+        body.light-theme .menu-item.active {
+            background-color: rgba(59, 130, 246, 0.2);
+        }
+        
+        body.light-theme .card {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .header {
+            background: rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .search-box {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+        
+        body.light-theme .theme-toggle {
+            background: rgba(226, 232, 240, 0.8);
+        }
+        
+        body.light-theme .form-input {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+        
+        body.light-theme .form-select {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+        
+        body.light-theme .modal-content {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .member-card {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .partition-card {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .offset-reset-option {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .confirm-dialog {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .toast {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme main::-webkit-scrollbar-track {
+            background: rgba(226, 232, 240, 0.8);
+        }
+        
+        body.light-theme .footer {
+            background: rgba(255, 255, 255, 0.8);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .border-gray-700 {
+            border-color: rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        body.light-theme .text-gray-400 {
+            color: #64748b !important;
+        }
+        
+        body.light-theme .text-gray-500 {
+            color: #64748b !important;
+        }
+        
+        body.light-theme .border-t {
+            border-color: rgba(0, 0, 0, 0.1) !important;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -1420,36 +1526,64 @@
     </div>
 
     <script>
-        // Theme Toggle
-        const themeToggle = document.getElementById('themeToggle');
-        themeToggle.addEventListener('click', function() {
-            this.classList.toggle('active');
-            // Here you would implement the actual theme switching logic
-        });
-
-        // Group Search
-        const groupSearch = document.getElementById('groupSearch');
-        groupSearch.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const rows = document.querySelectorAll('#groupsTableBody tr');
+        // 确保DOM加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // Theme Toggle
+            const themeToggle = document.getElementById('themeToggle');
             
-            rows.forEach(row => {
-                const groupName = row.cells[0].textContent.toLowerCase();
-                if (groupName.includes(searchTerm)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
+            // 检查主题切换按钮是否存在
+            if (themeToggle) {
+                // Check for saved theme preference or default to dark theme
+                const currentTheme = localStorage.getItem('theme') || 'dark';
+                if (currentTheme === 'light') {
+                    document.body.classList.add('light-theme');
+                    themeToggle.classList.add('active');
                 }
-            });
-        });
+                
+                themeToggle.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    document.body.classList.toggle('light-theme');
+                    
+                    // Save theme preference
+                    const theme = document.body.classList.contains('light-theme') ? 'light' : 'dark';
+                    localStorage.setItem('theme', theme);
+                    
+                    // Show toast notification
+                    showToast('success', '主题切换', `已切换到${theme === 'light' ? '浅色' : '深色'}主题`);
+                });
+            } else {
+                console.error('主题切换按钮未找到');
+            }
 
-        // Refresh Groups
-        document.getElementById('refreshGroupsBtn').addEventListener('click', function() {
-            showToast('info', '刷新消费者组', '正在刷新消费者组列表...');
-            // Here you would implement the actual refresh logic
-            setTimeout(() => {
-                showToast('success', '刷新完成', '消费者组列表已更新');
-            }, 1000);
+            // Group Search
+            const groupSearch = document.getElementById('groupSearch');
+            if (groupSearch) {
+                groupSearch.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase();
+                    const rows = document.querySelectorAll('#groupsTableBody tr');
+                    
+                    rows.forEach(row => {
+                        const groupName = row.cells[0].textContent.toLowerCase();
+                        if (groupName.includes(searchTerm)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                });
+            }
+
+            // Refresh Groups
+            const refreshGroupsBtn = document.getElementById('refreshGroupsBtn');
+            if (refreshGroupsBtn) {
+                refreshGroupsBtn.addEventListener('click', function() {
+                    showToast('info', '刷新消费者组', '正在刷新消费者组列表...');
+                    // Here you would implement the actual refresh logic
+                    setTimeout(() => {
+                        showToast('success', '刷新完成', '消费者组列表已更新');
+                    }, 1000);
+                });
+            }
         });
 
         // View Group Details

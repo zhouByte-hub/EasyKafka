@@ -385,6 +385,171 @@
         main::-webkit-scrollbar-thumb:hover {
             background: rgba(59, 130, 246, 0.8);
         }
+        
+        /* Light Theme Styles */
+        body.light-theme {
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        
+        body.light-theme .sidebar {
+            background: linear-gradient(180deg, #f1f5f9 0%, rgba(241, 245, 249, 0.8) 100%);
+            border-right: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .menu-item:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+        
+        body.light-theme .menu-item.active {
+            background-color: rgba(59, 130, 246, 0.2);
+        }
+        
+        body.light-theme .card {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .header {
+            background: rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .search-box {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+        
+        body.light-theme .theme-toggle {
+            background: rgba(226, 232, 240, 0.8);
+        }
+        
+        body.light-theme .footer {
+            background: rgba(255, 255, 255, 0.8);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .cluster-card {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .cluster-card.active {
+            border-color: var(--primary);
+        }
+        
+        body.light-theme .modal-content {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .form-input {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+        
+        body.light-theme .form-select {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+        
+        body.light-theme .form-checkbox {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .tabs {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme main::-webkit-scrollbar-track {
+            background: rgba(226, 232, 240, 0.8);
+        }
+        
+        body.light-theme .border-gray-700 {
+            border-color: rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        body.light-theme .text-gray-400 {
+            color: #64748b !important;
+        }
+        
+        body.light-theme .text-gray-500 {
+            color: #64748b !important;
+        }
+        
+        body.light-theme .border-t {
+            border-color: rgba(0, 0, 0, 0.1) !important;
+        }
+
+        /* Toast Notification Styles */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(30, 41, 59, 0.9);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            z-index: 1000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: rgba(16, 185, 129, 0.9);
+        }
+
+        .toast.error {
+            background: rgba(239, 68, 68, 0.9);
+        }
+
+        .toast.info {
+            background: rgba(59, 130, 246, 0.9);
+        }
+
+        .toast.warning {
+            background: rgba(245, 158, 11, 0.9);
+        }
+
+        .toast-icon {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+
+        .toast.success .toast-icon {
+            color: white;
+        }
+
+        .toast.error .toast-icon {
+            color: white;
+        }
+
+        .toast.info .toast-icon {
+            color: white;
+        }
+
+        .toast.warning .toast-icon {
+            color: white;
+        }
+
+        body.light-theme .toast {
+            background: rgba(255, 255, 255, 0.9);
+            color: #1e293b;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -826,90 +991,147 @@
 
     <script>
         // Theme Toggle
-        const themeToggle = document.getElementById('themeToggle');
-        themeToggle.addEventListener('click', function() {
-            this.classList.toggle('active');
-            // Here you would implement the actual theme switching logic
-        });
-
-        
-
-        // Modal Functions
-        const clusterModal = document.getElementById('clusterModal');
-        const addClusterBtn = document.getElementById('addClusterBtn');
-        const clusterForm = document.getElementById('clusterForm');
-        const modalTitle = document.getElementById('modalTitle');
-
-        addClusterBtn.addEventListener('click', function() {
-            modalTitle.textContent = '添加集群';
-            clusterForm.reset();
-            clusterModal.classList.add('active');
-        });
-
-        function closeModal() {
-            clusterModal.classList.remove('active');
-        }
-
-        function editCluster(clusterName) {
-            modalTitle.textContent = '编辑集群';
-            // Here you would populate the form with the cluster data
-            clusterModal.classList.add('active');
-        }
-
-        function testConnection(clusterName) {
-            // Here you would implement the actual connection test
-            alert(`正在测试 ${clusterName} 的连接...`);
-        }
-
-        // Tab Switching
-        function switchTab(tabName) {
-            // Hide all tab contents
-            const tabContents = document.querySelectorAll('.tab-content');
-            tabContents.forEach(content => {
-                content.classList.remove('active');
-            });
-
-            // Remove active class from all tabs
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(tab => {
-                tab.classList.remove('active');
-            });
-
-            // Show selected tab content
-            document.getElementById(`${tabName}-tab`).classList.add('active');
-
-            // Add active class to clicked tab
-            event.target.classList.add('active');
-        }
-
-        // Form Submission
-        clusterForm.addEventListener('submit', function(e) {
-            e.preventDefault();
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('themeToggle');
             
-            // Here you would save the cluster configuration
-            const clusterData = {
-                name: document.getElementById('clusterName').value,
-                bootstrapServers: document.getElementById('bootstrapServers').value,
-                protocol: document.getElementById('protocol').value,
-                requestTimeout: document.getElementById('requestTimeout').value,
-                retryCount: document.getElementById('retryCount').value,
-                enableSasl: document.getElementById('enableSasl').checked,
-                enableSsl: document.getElementById('enableSsl').checked
-            };
-
-            console.log('Saving cluster:', clusterData);
+            // 检查localStorage中的主题偏好
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+                themeToggle.classList.add('active');
+            }
             
-            // Close modal
-            closeModal();
-            
-            // Show success message
-            alert('集群配置已保存！');
-        });
+            // 主题切换事件
+            if (themeToggle) {
+                themeToggle.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    
+                    if (this.classList.contains('active')) {
+                        document.body.classList.add('light-theme');
+                        localStorage.setItem('theme', 'light');
+                        showToast('已切换到浅色主题');
+                    } else {
+                        document.body.classList.remove('light-theme');
+                        localStorage.setItem('theme', 'dark');
+                        showToast('已切换到深色主题');
+                    }
+                });
+            } else {
+                console.error('主题切换按钮未找到');
+            }
 
-        // Close modal when clicking outside
-        clusterModal.addEventListener('click', function(e) {
-            if (e.target === clusterModal) {
-                closeModal();
+            // 显示通知的函数
+            function showToast(message) {
+                // 创建toast元素
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.innerHTML = `
+                    <div class="toast-content">
+                        <i class="fas fa-check-circle"></i>
+                        <span>${message}</span>
+                    </div>
+                `;
+                
+                // 添加到页面
+                document.body.appendChild(toast);
+                
+                // 显示toast
+                setTimeout(() => {
+                    toast.classList.add('show');
+                }, 10);
+                
+                // 3秒后隐藏
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => {
+                        document.body.removeChild(toast);
+                    }, 300);
+                }, 3000);
+            }
+
+            // Modal Functions
+            const clusterModal = document.getElementById('clusterModal');
+            const addClusterBtn = document.getElementById('addClusterBtn');
+            const clusterForm = document.getElementById('clusterForm');
+            const modalTitle = document.getElementById('modalTitle');
+
+            if (addClusterBtn) {
+                addClusterBtn.addEventListener('click', function() {
+                    modalTitle.textContent = '添加集群';
+                    clusterForm.reset();
+                    clusterModal.classList.add('active');
+                });
+            }
+
+            function closeModal() {
+                clusterModal.classList.remove('active');
+            }
+
+            function editCluster(clusterName) {
+                modalTitle.textContent = '编辑集群';
+                // Here you would populate the form with the cluster data
+                clusterModal.classList.add('active');
+            }
+
+            function testConnection(clusterName) {
+                // Here you would implement the actual connection test
+                alert(`正在测试 ${clusterName} 的连接...`);
+            }
+
+            // Tab Switching
+            function switchTab(tabName) {
+                // Hide all tab contents
+                const tabContents = document.querySelectorAll('.tab-content');
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                });
+
+                // Remove active class from all tabs
+                const tabs = document.querySelectorAll('.tab');
+                tabs.forEach(tab => {
+                    tab.classList.remove('active');
+                });
+
+                // Show selected tab content
+                document.getElementById(`${tabName}-tab`).classList.add('active');
+
+                // Add active class to clicked tab
+                event.target.classList.add('active');
+            }
+
+            // Form Submission
+            if (clusterForm) {
+                clusterForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    // Here you would save the cluster configuration
+                    const clusterData = {
+                        name: document.getElementById('clusterName').value,
+                        bootstrapServers: document.getElementById('bootstrapServers').value,
+                        protocol: document.getElementById('protocol').value,
+                        requestTimeout: document.getElementById('requestTimeout').value,
+                        retryCount: document.getElementById('retryCount').value,
+                        enableSasl: document.getElementById('enableSasl').checked,
+                        enableSsl: document.getElementById('enableSsl').checked
+                    };
+
+                    console.log('Saving cluster:', clusterData);
+                    
+                    // Close modal
+                    closeModal();
+                    
+                    // Show success message
+                    alert('集群配置已保存！');
+                });
+            }
+
+            // Close modal when clicking outside
+            if (clusterModal) {
+                clusterModal.addEventListener('click', function(e) {
+                    if (e.target === clusterModal) {
+                        closeModal();
+                    }
+                });
             }
         });
     </script>

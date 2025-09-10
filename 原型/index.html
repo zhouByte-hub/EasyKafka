@@ -458,6 +458,94 @@
         main::-webkit-scrollbar-thumb:hover {
             background: rgba(59, 130, 246, 0.8);
         }
+
+        /* 浅色主题样式 */
+        body.light-theme {
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+
+        body.light-theme .sidebar {
+            background: linear-gradient(180deg, #f1f5f9 0%, rgba(241, 245, 249, 0.8) 100%);
+            border-right: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-theme .menu-item:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        body.light-theme .menu-item.active {
+            background-color: rgba(59, 130, 246, 0.2);
+        }
+
+        body.light-theme .card {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-theme .btn-secondary {
+            background: rgba(241, 245, 249, 0.8);
+            color: #1e293b;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-theme .btn-secondary:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        body.light-theme .header {
+            background: rgba(248, 250, 252, 0.9);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-theme .search-box {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+
+        body.light-theme .theme-toggle {
+            background: rgba(241, 245, 249, 0.8);
+        }
+
+        body.light-theme .footer {
+            background: rgba(248, 250, 252, 0.9);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-theme .metric-card {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-theme .chart-container {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-theme .time-btn {
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.8);
+            color: #1e293b;
+        }
+
+        body.light-theme .time-btn:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        body.light-theme .toast {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+
+        body.light-theme main::-webkit-scrollbar-track {
+            background: rgba(241, 245, 249, 0.5);
+        }
+
+        body.light-theme main::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.5);
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -1011,9 +1099,24 @@
     <script>
         // Theme Toggle
         const themeToggle = document.getElementById('themeToggle');
+        
+        // Check for saved theme preference or default to dark theme
+        const currentTheme = localStorage.getItem('theme') || 'dark';
+        if (currentTheme === 'light') {
+            document.body.classList.add('light-theme');
+            themeToggle.classList.add('active');
+        }
+        
         themeToggle.addEventListener('click', function() {
             this.classList.toggle('active');
-            // Here you would implement the actual theme switching logic
+            document.body.classList.toggle('light-theme');
+            
+            // Save theme preference
+            const theme = document.body.classList.contains('light-theme') ? 'light' : 'dark';
+            localStorage.setItem('theme', theme);
+            
+            // Show toast notification
+            showToast('success', '主题切换', `已切换到${theme === 'light' ? '浅色' : '深色'}主题`);
         });
 
         

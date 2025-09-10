@@ -565,8 +565,134 @@
         .log-details-content div:last-child {
             margin-bottom: 0;
         }
-
         
+        /* Light Theme Styles */
+        body.light-theme {
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        
+        body.light-theme .sidebar {
+            background: linear-gradient(180deg, #f1f5f9 0%, rgba(241, 245, 249, 0.8) 100%);
+            border-right: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .menu-item:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+        
+        body.light-theme .menu-item.active {
+            background-color: rgba(59, 130, 246, 0.2);
+        }
+        
+        body.light-theme .card {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .header {
+            background: rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .search-box {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+        
+        body.light-theme .theme-toggle {
+            background: rgba(226, 232, 240, 0.8);
+        }
+        
+        body.light-theme .log-entry:hover {
+            background: rgba(226, 232, 240, 0.5);
+        }
+        
+        body.light-theme .log-time {
+            color: #64748b;
+        }
+        
+        body.light-theme .log-description {
+            color: #64748b;
+        }
+        
+        body.light-theme .log-details {
+            background: rgba(241, 245, 249, 0.8);
+            color: #475569;
+        }
+        
+        body.light-theme .pagination button {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+        
+        body.light-theme .pagination button:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        body.light-theme .toast {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .log-table {
+            background: rgba(255, 255, 255, 0.8);
+        }
+        
+        body.light-theme .log-table th {
+            background: rgba(241, 245, 249, 0.8);
+            color: #1e293b;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .log-table td {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        body.light-theme .log-table tr:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+        
+        body.light-theme .log-details-btn {
+            color: #64748b;
+        }
+        
+        body.light-theme .log-details-btn:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: #1e293b;
+        }
+        
+        body.light-theme .log-details-content {
+            background: rgba(241, 245, 249, 0.8);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme main::-webkit-scrollbar-track {
+            background: rgba(226, 232, 240, 0.8);
+        }
+        
+        body.light-theme .footer {
+            background: rgba(255, 255, 255, 0.8);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .border-gray-700 {
+            border-color: rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        body.light-theme .text-gray-400 {
+            color: #64748b !important;
+        }
+        
+        body.light-theme .text-gray-500 {
+            color: #64748b !important;
+        }
+        
+        body.light-theme .border-t {
+            border-color: rgba(0, 0, 0, 0.1) !important;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -858,9 +984,24 @@
 
         // Theme Toggle
         const themeToggle = document.getElementById('themeToggle');
+        
+        // Check for saved theme preference or default to dark theme
+        const currentTheme = localStorage.getItem('theme') || 'dark';
+        if (currentTheme === 'light') {
+            document.body.classList.add('light-theme');
+            themeToggle.classList.add('active');
+        }
+        
         themeToggle.addEventListener('click', function() {
             this.classList.toggle('active');
-            // Here you would implement the actual theme switching logic
+            document.body.classList.toggle('light-theme');
+            
+            // Save theme preference
+            const theme = document.body.classList.contains('light-theme') ? 'light' : 'dark';
+            localStorage.setItem('theme', theme);
+            
+            // Show toast notification
+            showToast('success', '主题切换', `已切换到${theme === 'light' ? '浅色' : '深色'}主题`);
         });
 
         // Filter Tags
