@@ -7,7 +7,7 @@
           v-model="filterKeyword"
           placeholder="搜索日志"
           prefix-icon="Search"
-          style="width: 300px"
+          style="max-width: 300px"
           clearable
         />
         <el-select v-model="logLevel" placeholder="日志级别" style="width: 120px">

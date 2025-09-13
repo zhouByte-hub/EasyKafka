@@ -91,29 +91,31 @@
                 <el-switch v-model="consumerForm.autoCommit" />
               </el-form-item>
               
-              <el-form-item>
+            </el-form>
+            <div>
+               <div>
                 <el-button
                   type="primary"
                   @click="startConsuming"
                   :loading="consuming"
                   style="width: 100%"
                 >
-                  <el-icon><VideoPlay /></el-icon>
+                  <el-icon size="18" style="margin-right: 5px;"><VideoPlay /></el-icon>
                   开始消费
                 </el-button>
-              </el-form-item>
+              </div>
               
-              <el-form-item v-if="consuming">
+              <div v-if="consuming">
                 <el-button
                   type="danger"
                   @click="stopConsuming"
-                  style="width: 100%"
+                  style="width: 100%; margin-top: 10px;"
                 >
-                  <el-icon><VideoPause /></el-icon>
+                  <el-icon size="18" style="margin-right: 5px;"><VideoPause /></el-icon>
                   停止消费
                 </el-button>
-              </el-form-item>
-            </el-form>
+              </div>
+            </div>
           </div>
         </el-col>
         
