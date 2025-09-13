@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { useSettingsStore } from './stores/settings'
+import { useThemeStore } from './stores/theme'
 import Sidebar from './components/Sidebar.vue'
 import Header from './components/Header.vue'
 
 const route = useRoute()
-const settingsStore = useSettingsStore()
+const themeStore = useThemeStore()
 
 // 计算当前路由名称
 const routeName = computed(() => route.name as string)
@@ -19,7 +19,7 @@ const showLayout = computed(() => {
 </script>
 
 <template>
-  <div class="app-container" :class="{ 'dark': settingsStore.theme === 'dark' }">
+  <div class="app-container" :class="{ 'dark': themeStore.currentTheme === 'dark' }">
     <!-- 布局容器 -->
     <div v-if="showLayout" class="app-layout">
       <!-- 侧边栏 -->

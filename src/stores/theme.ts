@@ -5,20 +5,16 @@ import { ref, computed, watch } from 'vue'
 
 export const useThemeStore = defineStore('theme', () => {
   // 状态
-  const theme = ref<'light' | 'dark' | 'auto'>('auto')
+  const theme = ref<'light' | 'dark'>('light')
   const isDark = ref(false)
   
   // 计算属性
   const currentTheme = computed(() => {
-    if (theme.value === 'auto') {
-      // 检查系统主题偏好
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-    }
     return theme.value
   })
   
   // 方法
-  const setTheme = (newTheme: 'light' | 'dark' | 'auto') => {
+  const setTheme = (newTheme: 'light' | 'dark') => {
     theme.value = newTheme
     updateTheme()
   }
@@ -26,8 +22,6 @@ export const useThemeStore = defineStore('theme', () => {
   const toggleTheme = () => {
     if (theme.value === 'light') {
       theme.value = 'dark'
-    } else if (theme.value === 'dark') {
-      theme.value = 'auto'
     } else {
       theme.value = 'light'
     }
@@ -51,21 +45,9 @@ export const useThemeStore = defineStore('theme', () => {
   
   const initTheme = () => {
     // 从本地存储获取主题设置
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | 'auto' | null
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null
     if (savedTheme) {
       theme.value = savedTheme
-    }
-    
-    // 监听系统主题变化
-    if (theme.value === 'auto') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-      const handleChange = (e: MediaQueryListEvent) => {
-        if (theme.value === 'auto') {
-          updateTheme()
-        }
-      }
-      
-      mediaQuery.addEventListener('change', handleChange)
     }
     
     // 初始化主题
