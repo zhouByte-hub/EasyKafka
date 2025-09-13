@@ -1,160 +1,110 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { invoke } from "@tauri-apps/api/core";
+import { ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { useSettingsStore } from './stores/settings'
+import Sidebar from './components/Sidebar.vue'
+import Header from './components/Header.vue'
 
-const greetMsg = ref("");
-const name = ref("");
+const route = useRoute()
+const settingsStore = useSettingsStore()
 
-async function greet() {
-  // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-  greetMsg.value = await invoke("greet", { name: name.value });
-}
+// 计算当前路由名称
+const routeName = computed(() => route.name as string)
+
+// 判断是否显示侧边栏和头部
+const showLayout = computed(() => {
+  // 可以添加不需要显示布局的路由
+  return !['login'].includes(routeName.value)
+})
 </script>
 
 <template>
-  <main class="container">
-    <h1>Welcome to Tauri + Vue</h1>
-
-    <div class="row">
-      <a href="https://vite.dev" target="_blank">
-        <img src="/vite.svg" class="logo vite" alt="Vite logo" />
-      </a>
-      <a href="https://tauri.app" target="_blank">
-        <img src="/tauri.svg" class="logo tauri" alt="Tauri logo" />
-      </a>
-      <a href="https://vuejs.org/" target="_blank">
-        <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-      </a>
+  <div class="app-container" :class="{ 'dark': settingsStore.theme === 'dark' }">
+    <!-- 布局容器 -->
+    <div v-if="showLayout" class="app-layout">
+      <!-- 侧边栏 -->
+      <Sidebar />
+      
+      <!-- 主内容区 -->
+      <div class="main-container">
+        <!-- 头部导航 -->
+        <Header />
+        
+        <!-- 页面内容 -->
+        <div class="page-content">
+          <router-view />
+        </div>
+        
+        <!-- 底部信息 -->
+        <div class="footer">
+          <p>EasyKafka © {{ new Date().getFullYear() }} - 让 Kafka 的使用像呼吸一样简单</p>
+        </div>
+      </div>
     </div>
-    <p>Click on the Tauri, Vite, and Vue logos to learn more.</p>
-
-    <form class="row" @submit.prevent="greet">
-      <input id="greet-input" v-model="name" placeholder="Enter a name..." />
-      <button type="submit">Greet</button>
-    </form>
-    <p>{{ greetMsg }}</p>
-  </main>
+    
+    <!-- 无布局的页面（如登录页） -->
+    <div v-else class="full-page">
+      <router-view />
+    </div>
+  </div>
 </template>
 
-<style scoped>
-.logo.vite:hover {
-  filter: drop-shadow(0 0 2em #747bff);
-}
-
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #249b73);
-}
-
-</style>
 <style>
-:root {
-  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 400;
+/* 全局样式已在 global.scss 中定义 */
+</style>
 
-  color: #0f0f0f;
-  background-color: #f6f6f6;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
+<style scoped>
+.app-container {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--el-bg-color);
+  color: var(--el-text-color-primary);
+  transition: background-color 0.3s, color 0.3s;
 }
 
-.container {
-  margin: 0;
-  padding-top: 10vh;
+.app-layout {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+.main-container {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  text-align: center;
+  overflow: hidden;
+  min-width: 0; /* 防止flex子项溢出 */
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: 0.75s;
+.page-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  background-color: var(--el-bg-color-page);
+  min-width: 0; /* 防止flex子项溢出 */
 }
 
-.logo.tauri:hover {
-  filter: drop-shadow(0 0 2em #24c8db);
-}
-
-.row {
+.footer {
+  height: 40px;
   display: flex;
+  align-items: center;
   justify-content: center;
+  border-top: 1px solid var(--el-border-color-light);
+  background-color: var(--el-bg-color);
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  flex-shrink: 0; /* 防止footer被压缩 */
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+.full-page {
+  height: 100%;
+  width: 100%;
 }
 
-a:hover {
-  color: #535bf2;
+/* 暗色主题适配 */
+.app-container.dark {
+  background-color: var(--el-bg-color);
+  color: var(--el-text-color-primary);
 }
-
-h1 {
-  text-align: center;
-}
-
-input,
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  color: #0f0f0f;
-  background-color: #ffffff;
-  transition: border-color 0.25s;
-  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
-}
-
-button {
-  cursor: pointer;
-}
-
-button:hover {
-  border-color: #396cd8;
-}
-button:active {
-  border-color: #396cd8;
-  background-color: #e8e8e8;
-}
-
-input,
-button {
-  outline: none;
-}
-
-#greet-input {
-  margin-right: 5px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    color: #f6f6f6;
-    background-color: #2f2f2f;
-  }
-
-  a:hover {
-    color: #24c8db;
-  }
-
-  input,
-  button {
-    color: #ffffff;
-    background-color: #0f0f0f98;
-  }
-  button:active {
-    background-color: #0f0f0f69;
-  }
-}
-
 </style>
