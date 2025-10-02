@@ -15,8 +15,7 @@
         "title": "easy-kafka",
         "width": 1600,
         "height": 800,
-        "center": true,
-        "alwaysOnTop": true
+        "center": true
       }
     ],
     "security": {
