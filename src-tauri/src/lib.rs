@@ -15,7 +15,7 @@ pub fn run() {
         .plugin(tauri_plugin_http::init())
         .invoke_handler(tauri::generate_handler![
             handles::dashboard::dashboard_statistics
-            ])
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -109,7 +109,6 @@ pub fn run() {
 //     });
 //     exp1 || exp2
 // }
-
 
 // #[cfg(test)]
 // mod test{

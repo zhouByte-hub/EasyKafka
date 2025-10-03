@@ -4,4 +4,3 @@ use crate::EasyKafkaResult;
 pub fn dashboard_statistics() -> EasyKafkaResult<()> {
     Ok(())
 }
-

@@ -133,7 +133,7 @@ let networkIOChart: echarts.ECharts | null = null
 const overviewCards = reactive([
   {
     title: 'Broker数量',
-    value: '3/3',
+    value: '3',
     icon: 'Connection',
     color: '#409EFF',
     trend: 'up',
