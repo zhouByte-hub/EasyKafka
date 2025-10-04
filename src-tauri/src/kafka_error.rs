@@ -1,3 +1,4 @@
+use rdkafka::error::KafkaError;
 use tauri::ipc::InvokeError;
 use thiserror::Error;
 
@@ -11,6 +12,9 @@ pub enum EasyKafkaError {
 
     #[error("JWT Error: {0}")]
     JWTError(#[from] jsonwebtoken::errors::Error),
+
+    #[error("Kafka Error: {0}")]
+    KafkaError(#[from] KafkaError),
 
     #[error("Other Error: {0}")]
     StdError(#[from] Box<dyn std::error::Error>),

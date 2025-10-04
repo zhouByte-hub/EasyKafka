@@ -1,6 +1,7 @@
 use jsonwebtoken::encode;
 use jsonwebtoken::{decode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
@@ -21,8 +22,7 @@ pub struct Claims {
     issued_at: usize, // 签发时间
 
     pub url: String,
-    pub username: String,
-    pub password: String,
+    pub settings: HashMap<String, String>,
 }
 
 impl Claims {
@@ -32,14 +32,23 @@ impl Claims {
             .unwrap()
             .as_secs() as usize;
 
+        let mut settings = HashMap::new();
+        settings.insert("bootstrap.servers".to_string(), url.to_string());
+        settings.insert("sasl.mechanism".to_string(), "PLAIN".to_string());
+        settings.insert(
+            "security.protocol".to_string(),
+            "SASL_PLAINTEXT".to_string(),
+        );
+        settings.insert("sasl.username".to_string(), username.to_string());
+        settings.insert("sasl.password".to_string(), password.to_string());
+
         Self {
             issuer: "EasyKafka".to_string(),
             subject: "EasyKafka Subject".to_string(),
             expiration: now + 60 * 60, // 一个小时后过期
             issued_at: now,
             url: url.to_string(),
-            username: username.to_string(),
-            password: password.to_string(),
+            settings: settings,
         }
     }
 }

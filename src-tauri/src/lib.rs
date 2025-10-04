@@ -1,5 +1,6 @@
 use crate::kafka_error::EasyKafkaError;
 
+pub(crate) mod entity;
 pub(crate) mod handles;
 pub(crate) mod infra;
 pub(crate) mod kafka_error;
