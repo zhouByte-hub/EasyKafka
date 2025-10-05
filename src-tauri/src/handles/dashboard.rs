@@ -8,7 +8,7 @@ use crate::{infra::kafka_infra::create_kafka_client, EasyKafkaResult};
 pub fn dashboard_statistics(token: &str) -> EasyKafkaResult<DashboardStatistics> {
     let client = create_kafka_client(token)?;
     let mut result = DashboardStatistics::default();
-    
+
     let metadata = client
         .inner()
         .fetch_metadata(None, Timeout::from(Duration::from_secs(5)))?;

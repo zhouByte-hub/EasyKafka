@@ -18,6 +18,12 @@ pub enum EasyKafkaError {
 
     #[error("Other Error: {0}")]
     StdError(#[from] Box<dyn std::error::Error>),
+
+    #[error("Toml Error: {0}")]
+    TomlError(#[from] toml::de::Error),
+
+    #[error("SQL Error: {0}")]
+    SqlError(#[from] sea_orm::DbErr),
 }
 
 impl Into<InvokeError> for EasyKafkaError {
