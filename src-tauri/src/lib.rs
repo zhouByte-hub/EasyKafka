@@ -12,8 +12,10 @@ pub type EasyKafkaResult<T> = Result<T, EasyKafkaError>;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub async fn run() -> EasyKafkaResult<()> {
-    let _config = config::read_config().await?;
+    let config = config::read_config().await?;
+
     tauri::Builder::default()
+        .manage(config)
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_http::init())
         .invoke_handler(tauri::generate_handler![

@@ -1082,6 +1082,7 @@ name = "easy-kafka"
 version = "0.1.0"
 dependencies = [
  "flexi_logger",
+ "getset",
  "jsonwebtoken",
  "once_cell",
  "rdkafka",
@@ -1618,6 +1619,18 @@ dependencies = [
  "r-efi",
  "wasi 0.14.5+wasi-0.2.4",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "getset"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9cf0fc11e47561d47397154977bc219f4cf809b2974facc3ccb3b89e2436f912"
+dependencies = [
+ "proc-macro-error2",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.106",
 ]
 
 [[package]]

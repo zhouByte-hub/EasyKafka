@@ -16,6 +16,9 @@ pub enum EasyKafkaError {
     #[error("Kafka Error: {0}")]
     KafkaError(#[from] KafkaError),
 
+    #[error("Kafka Connect Not Found: {0}")]
+    KafkaConnectNotFound(String),
+
     #[error("Other Error: {0}")]
     StdError(#[from] Box<dyn std::error::Error>),
 

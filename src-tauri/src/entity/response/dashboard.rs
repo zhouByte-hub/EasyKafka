@@ -1,9 +1,29 @@
+use getset::{CloneGetters, CopyGetters, Getters, MutGetters, Setters, WithSetters};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(
+    Getters,
+    Setters,
+    WithSetters,
+    MutGetters,
+    CopyGetters,
+    CloneGetters,
+    Default,
+    Debug,
+    Serialize,
+    Deserialize,
+)]
+
 pub struct DashboardStatistics {
-    pub topic_count: usize,
-    pub partition_count: usize,
-    pub broker_count: usize,
-    pub lag_count: usize,
+    #[getset(get = "pub", set = "pub", get_mut = "pub", set_with = "pub")]
+    topic_count: usize,
+
+    #[getset(get = "pub", set = "pub", get_mut = "pub", set_with = "pub")]
+    partition_count: usize,
+
+    #[getset(get = "pub", set = "pub", get_mut = "pub", set_with = "pub")]
+    broker_count: usize,
+
+    #[getset(get = "pub", set = "pub", get_mut = "pub", set_with = "pub")]
+    lag_count: usize,
 }
