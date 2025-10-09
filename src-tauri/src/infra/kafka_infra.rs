@@ -25,6 +25,12 @@ pub async fn create_kafka_admin_client(
             if let Some(password) = connect.password.as_deref() {
                 client_config.set("sasl.password", password);
             }
+            if connect.ssl {
+                client_config.set("security.protocol", "SASL_SSL");
+            } else {
+                client_config.set("security.protocol", "SASL_PLAINTEXT");
+            }
+            client_config.set("socket.timeout.ms", connect.timeout.to_string());
             Ok(client_config.create()?)
         }
         None => Err(EasyKafkaError::KafkaConnectNotFound(token.to_string())),
