@@ -19,7 +19,10 @@ pub async fn run() -> EasyKafkaResult<()> {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_http::init())
         .invoke_handler(tauri::generate_handler![
-            handles::dashboard::dashboard_statistics
+            handles::dashboard::dashboard_statistics,
+            handles::clusters::cluster_list,
+            handles::clusters::cluster_create_or_update,
+            handles::clusters::check_connect,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

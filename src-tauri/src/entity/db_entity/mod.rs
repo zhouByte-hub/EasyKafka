@@ -2,5 +2,5 @@
 
 pub mod prelude;
 
-pub mod connect_properties;
-pub mod kafka_connect;
+pub mod cluster;
+pub mod topics;

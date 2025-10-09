@@ -32,20 +32,19 @@ pub async fn dashboard_statistics(
             // partition
             result.set_partition_count(result.partition_count() + partitions.len());
             // lag
-            result.set_lag_count(
-                result.lag_count()
-                    + partitions
-                        .iter()
-                        .map(|item| {
-                            let (high, low) = client.inner().fetch_watermarks(
-                                topic.name(),
-                                item.id(),
-                                Timeout::from(Duration::from_secs(5)),
-                            )?;
-                            Ok((high - low) as usize)
-                        })
-                        .sum::<EasyKafkaResult<usize>>()?,
-            );
+            let count = result.lag_count()
+                + partitions
+                    .iter()
+                    .map(|item| {
+                        let (high, low) = client.inner().fetch_watermarks(
+                            topic.name(),
+                            item.id(),
+                            Timeout::from(Duration::from_secs(5)),
+                        )?;
+                        Ok((high - low) as usize)
+                    })
+                    .sum::<EasyKafkaResult<usize>>()?;
+            result.set_lag_count(count);
         }
     } else {
         result.set_partition_count(0);

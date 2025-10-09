@@ -10,9 +10,6 @@ pub enum EasyKafkaError {
     #[error("JSON Error: {0}")]
     JSONError(#[from] serde_json::Error),
 
-    #[error("JWT Error: {0}")]
-    JWTError(#[from] jsonwebtoken::errors::Error),
-
     #[error("Kafka Error: {0}")]
     KafkaError(#[from] KafkaError),
 
