@@ -29,10 +29,6 @@
               <div class="card-info">
                 <div class="card-title">{{ card.title }}</div>
                 <div class="card-value">{{ card.value }}</div>
-                <div class="card-trend" :class="card.trend">
-                  <el-icon><component :is="card.trend === 'up' ? 'ArrowUp' : 'ArrowDown'" /></el-icon>
-                  {{ card.trendValue }}
-                </div>
               </div>
             </div>
           </el-card>
@@ -104,6 +100,7 @@
 import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh, ArrowUp, ArrowDown, Monitor, DataLine, Connection, Document, Histogram, PieChart, TrendCharts } from '@element-plus/icons-vue'
+import { invoke } from '@tauri-apps/api/core';
 
 // 导入ECharts
 import * as echarts from 'echarts'
@@ -136,32 +133,24 @@ const overviewCards = reactive([
     value: '3',
     icon: 'Connection',
     color: '#409EFF',
-    trend: 'up',
-    trendValue: '0%'
   },
   {
     title: 'Topic总数',
     value: '24',
     icon: 'Document',
     color: '#67C23A',
-    trend: 'up',
-    trendValue: '4.2%'
   },
   {
     title: '分区总数',
     value: '96',
     icon: 'Histogram',
     color: '#E6A23C',
-    trend: 'up',
-    trendValue: '2.1%'
   },
   {
     title: '总Lag',
     value: '3.2K',
     icon: 'TrendCharts',
     color: '#F56C6C',
-    trend: 'down',
-    trendValue: '5.8%'
   }
 ])
 
@@ -176,6 +165,9 @@ const fetchDashboardData = async () => {
     // 这里应该调用API获取仪表盘数据
     // 模拟API调用
     await new Promise(resolve => setTimeout(resolve, 500))
+    invoke('dashboard_statistics', {'token': '123123'}).then((result) => {
+      console.log(result)
+    })
     
     // 更新图表
     updateMessageRateChart()
@@ -481,7 +473,7 @@ const updateDiskUsageChart = () => {
   
   // 生成模拟数据
   const brokers = ['Broker-1', 'Broker-2', 'Broker-3']
-  const usedData = []
+  const usedData: any[] = []
   const totalData = []
   
   for (let i = 0; i < brokers.length; i++) {

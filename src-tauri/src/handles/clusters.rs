@@ -4,8 +4,7 @@ use crate::entity::response::common::CommonResponse;
 use crate::infra::kafka_infra::create_kafka_admin_client;
 use crate::infra::sql_infra::get_connect;
 use crate::EasyKafkaResult;
-use sea_orm::EntityTrait;
-use sea_orm::Set;
+use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, Set};
 use tauri::State;
 use uuid::Uuid;
 
@@ -37,7 +36,8 @@ pub async fn cluster_create_or_update(
         password: Set(model.password),
         timeout: Set(model.timeout),
         ssl: Set(model.ssl),
-        connected: Set(model.connected)
+        sasl: Set(model.sasl),
+        connected: Set(model.connected),
     };
     if is_new_record {
         cluster::Entity::insert(active_model)
@@ -56,8 +56,27 @@ pub async fn check_connect(
     token: &str,
     config: State<'_, EasyKafkaConfig>,
 ) -> EasyKafkaResult<CommonResponse<String>> {
+    if token.is_empty() {
+        return Ok(CommonResponse::error("token不能为空".to_string()));
+    }
     match create_kafka_admin_client(token, &config).await {
         Ok(_) => Ok(CommonResponse::success("连接成功".to_string())),
         Err(e) => Ok(CommonResponse::error(format!("{:?}", e))),
     }
+}
+
+#[tauri::command]
+pub async fn delete_cluster(
+    token: &str,
+    config: State<'_, EasyKafkaConfig>,
+) -> EasyKafkaResult<CommonResponse<String>> {
+    if token.is_empty() {
+        return Ok(CommonResponse::error("token不能为空".to_string()));
+    }
+    let db_connect = get_connect(&config.database).await?;
+    cluster::Entity::delete_many()
+        .filter(cluster::Column::Id.eq(token))
+        .exec(&db_connect)
+        .await?;
+    Ok(CommonResponse::success("删除成功".to_string()))
 }

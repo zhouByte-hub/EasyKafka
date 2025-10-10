@@ -1,20 +1,20 @@
 use crate::config::EasyKafkaConfig;
 use crate::entity::db_entity::cluster;
 use crate::infra::sql_infra::get_connect;
-use crate::EasyKafkaError;
-use crate::EasyKafkaResult;
-use rdkafka::admin::AdminClient;
-use rdkafka::client::DefaultClientContext;
-use rdkafka::ClientConfig;
+use crate::{EasyKafkaError, EasyKafkaResult};
+use log::info;
+use rdkafka::{admin::AdminClient, client::DefaultClientContext, ClientConfig};
 use sea_orm::EntityTrait;
 
 pub async fn create_kafka_admin_client(
     token: &str,
     config: &EasyKafkaConfig,
 ) -> EasyKafkaResult<AdminClient<DefaultClientContext>> {
+    info!("create_kafka_admin_client");
     let db_connect = get_connect(&config.database).await?;
     let find_result = cluster::Entity::find_by_id(token).one(&db_connect).await?;
 
+    info!("create_kafka_admin_client find_result: {:?}", find_result);
     match find_result {
         Some(connect) => {
             let mut client_config = ClientConfig::new();

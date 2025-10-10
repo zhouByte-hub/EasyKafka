@@ -24,6 +24,9 @@ pub enum EasyKafkaError {
 
     #[error("SQL Error: {0}")]
     SqlError(#[from] sea_orm::DbErr),
+
+    #[error("FlexiLogger Error: {0}")]
+    FlexiLoggerError(#[from] flexi_logger::FlexiLoggerError),
 }
 
 impl Into<InvokeError> for EasyKafkaError {

@@ -14,6 +14,7 @@ pub struct Model {
     pub password: Option<String>,
     pub timeout: i32,
     pub ssl: bool,
+    pub sasl: Option<String>,
     pub connected: bool,
 }
 

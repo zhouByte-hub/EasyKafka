@@ -1,3 +1,5 @@
+use flexi_logger::{DeferredNow, Logger, Record};
+
 use crate::kafka_error::EasyKafkaError;
 
 pub(crate) mod config;
@@ -12,7 +14,14 @@ pub type EasyKafkaResult<T> = Result<T, EasyKafkaError>;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub async fn run() -> EasyKafkaResult<()> {
+    // 读取配置
     let config = config::read_config().await?;
+    // 初始化日志
+    Logger::try_with_str(&config.log.level)?
+        .log_to_stdout()
+        .format(console_log_format)
+        .write_mode(flexi_logger::WriteMode::Direct)
+        .start()?;
 
     tauri::Builder::default()
         .manage(config)
@@ -23,9 +32,34 @@ pub async fn run() -> EasyKafkaResult<()> {
             handles::clusters::cluster_list,
             handles::clusters::cluster_create_or_update,
             handles::clusters::check_connect,
+            handles::clusters::delete_cluster,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 
     Ok(())
+}
+
+// 自定义日志格式
+fn console_log_format(
+    w: &mut dyn std::io::Write,
+    now: &mut DeferredNow,
+    record: &Record,
+) -> std::io::Result<()> {
+    let file_name = record
+        .file()
+        .unwrap_or("<unkonw>")
+        .split('/')
+        .last()
+        .unwrap_or("<unkonw>");
+    write!(
+        w,
+        "[{}][{}][{}][{}:{}] - {}",
+        now.now().format("%Y-%m-%d %H:%M:%S%.3f"),
+        record.level(),
+        record.module_path().unwrap_or("<unkonwn>"),
+        file_name,
+        record.line().unwrap_or(0),
+        &record.args()
+    )
 }

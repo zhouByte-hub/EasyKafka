@@ -2,6 +2,7 @@ use crate::{
     config::EasyKafkaConfig, entity::response::dashboard::DashboardStatistics,
     infra::kafka_infra::create_kafka_admin_client,
 };
+use log::info;
 use rdkafka::util::Timeout;
 use std::time::Duration;
 use tauri::State;
@@ -13,6 +14,7 @@ pub async fn dashboard_statistics(
     token: &str,
     config: State<'_, EasyKafkaConfig>,
 ) -> EasyKafkaResult<DashboardStatistics> {
+    info!("dashboard_statistics token: {}", token);
     let client = create_kafka_admin_client(token, &config).await?;
     let mut result = DashboardStatistics::default();
 
@@ -50,5 +52,6 @@ pub async fn dashboard_statistics(
         result.set_partition_count(0);
         result.set_lag_count(0);
     }
+    info!("dashboard_statistics result: {:?}", result);
     Ok(result)
 }
