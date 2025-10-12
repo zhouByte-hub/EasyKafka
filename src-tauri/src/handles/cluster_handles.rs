@@ -1,26 +1,32 @@
 use crate::entity::db_entity::cluster;
-use crate::entity::response::cluster::ClusterListResponseBuilder;
+use crate::entity::response::cluster::ClusterResponseBuilder;
 use crate::entity::response::common::CommonResponse;
 use crate::infra::kafka_infra::create_kafka_admin_client;
 use crate::infra::sql_infra::get_connect;
 use crate::{config::EasyKafkaConfig, entity::response::cluster::ClusterListResponse};
 use crate::{EasyKafkaError, EasyKafkaResult};
 use rdkafka::util::Timeout;
-use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, Set};
+use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter, QuerySelect, Set};
 use tauri::State;
 use tokio::time::Duration;
 use uuid::Uuid;
 
 #[tauri::command]
 pub async fn cluster_list(
+    page: i32,
+    limit: i32,
     config: State<'_, EasyKafkaConfig>,
-) -> EasyKafkaResult<Vec<ClusterListResponse>> {
+) -> EasyKafkaResult<ClusterListResponse> {
     let db_connect = get_connect(&config.database).await?;
-    let cluster = cluster::Entity::find().all(&db_connect).await?;
+    let cluster = cluster::Entity::find()
+        .offset(((page - 1) * limit) as u64)
+        .limit(limit as u64)
+        .all(&db_connect)
+        .await?;
 
     let mut result = Vec::new();
     for item in cluster {
-        let response = ClusterListResponseBuilder::default()
+        let response = ClusterResponseBuilder::default()
             .id(item.id.clone())
             .servers(item.servers.clone())
             .cluster_name(item.cluster_name.clone())
@@ -34,7 +40,12 @@ pub async fn cluster_list(
             })?;
         result.push(response);
     }
-    Ok(result)
+    let mut response = ClusterListResponse::default();
+    response.set_current(page);
+    response.set_limit(limit);
+    response.set_total(cluster::Entity::find().count(&db_connect).await?);
+    response.set_list(result);
+    Ok(response)
 }
 
 #[tauri::command]

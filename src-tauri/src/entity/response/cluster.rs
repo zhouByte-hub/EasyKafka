@@ -1,8 +1,21 @@
 use derive_builder::Builder;
+use getset::{Getters, Setters};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, Builder)]
+#[derive(Debug, Serialize, Deserialize, Default, Setters, Getters)]
 pub struct ClusterListResponse {
+    #[getset(get = "pub", set = "pub")]
+    pub current: i32,
+    #[getset(get = "pub", set = "pub")]
+    pub limit: i32,
+    #[getset(get = "pub", set = "pub")]
+    pub total: u64,
+    #[getset(get = "pub", set = "pub")]
+    pub list: Vec<ClusterResponse>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Builder, Clone)]
+pub struct ClusterResponse {
     pub id: String,
 
     #[serde(rename = "bootstrapServers")]

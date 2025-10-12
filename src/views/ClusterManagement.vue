@@ -58,6 +58,22 @@
           </template>
         </el-table-column>
       </el-table>
+      
+      <!-- 分页组件 -->
+      <div class="pagination-container">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[5, 10, 20, 50]"
+          :small="false"
+          :disabled="false"
+          :background="true"
+          layout="total, sizes, prev, pager, next"
+          :total="total"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
     </div>
     
     <!-- 添加/编辑集群对话框 -->
@@ -134,17 +150,23 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
-import type { ClusterConfig } from '../stores/cluster'
+import type { ClusterConfig, ClusterListResponse } from '../stores/cluster'
 import { invoke } from '@tauri-apps/api/core';
 import type { CommonResult } from '../stores/settings'
+import { useClusterStore } from '../stores/cluster'
 
 const clusters = ref<ClusterConfig[]>([])
-
+const clusterStore = useClusterStore()
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const submitting = ref(false)
 const testingConnectionId = ref<string | null>(null)
 const clusterFormRef = ref<FormInstance>()
+
+// 分页相关变量
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
 
 // 集群表单数据
 const clusterForm = reactive({
@@ -182,8 +204,11 @@ const showAddClusterDialog = () => {
 }
 
 const clusterList = () => {
-  invoke<ClusterConfig[]>('cluster_list').then(result => {
-    clusters.value = result
+  invoke<ClusterListResponse>('cluster_list', {page: currentPage.value, limit: pageSize.value}).then(result => {
+    clusters.value = result.list
+    currentPage.value = result.current
+    pageSize.value = result.limit
+    total.value = result.total
   })
 }
 
@@ -208,6 +233,7 @@ const deleteCluster = (cluster: ClusterConfig) => {
     invoke<CommonResult>('delete_cluster', {token: cluster.id}).then(result => {
       if(result.code === 200){
         ElMessage.success(result.msg)
+        clusterStore.deleteCluster(cluster.id)
         clusterList()
       }else{
         ElMessage.error(result.msg)
@@ -244,8 +270,10 @@ const submitClusterForm = async () => {
         invoke<CommonResult>('cluster_create_or_update', {model: clusterForm}).then(result => {
            if(result.code === 200) {
              if(isEdit.value){
+               clusterStore.updateCluster(clusterForm.id, clusterForm)
                ElMessage.success('集群更新成功')
              }else{
+              clusterStore.addCluster(clusterForm)
                ElMessage.success('集群添加成功')
              }
              clusterList()
@@ -279,6 +307,18 @@ const resetForm = () => {
     timeout: 5000,
     isActive: false
   })
+}
+
+// 分页事件处理
+const handleSizeChange = (val: number) => {
+  pageSize.value = val
+  currentPage.value = 1 // 重置到第一页
+  clusterList()
+}
+
+const handleCurrentChange = (val: number) => {
+  currentPage.value = val
+  clusterList()
 }
 
 // 在组件挂载时调用clusterList方法加载数据
@@ -317,5 +357,11 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
 }
 </style>

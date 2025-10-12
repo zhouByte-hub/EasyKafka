@@ -1,6 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
+export interface ClusterListResponse {
+  current: number
+  limit: number
+  total: number
+  list: ClusterConfig[]
+}
+
 export interface ClusterConfig {
   id: string
   name: string

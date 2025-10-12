@@ -12,7 +12,7 @@
       <el-select
         v-model="activeClusterId"
         placeholder="选择集群"
-        style="width: 250px; margin-right: 20px"
+        style="width: 350px; margin-right: 20px"
         @change="handleClusterChange"
       >
         <el-option
@@ -54,31 +54,19 @@
           </el-icon>
         </el-button>
       </el-tooltip>
-      
-      <!-- 用户菜单 -->
-      <el-dropdown trigger="click" @command="handleCommand">
-        <div class="user-avatar">
-          <el-avatar :size="32" src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" />
-        </div>
-        <template #dropdown>
-          <el-dropdown-menu>
-            <el-dropdown-item command="profile">个人信息</el-dropdown-item>
-            <el-dropdown-item command="settings">系统设置</el-dropdown-item>
-            <el-dropdown-item divided command="about">关于</el-dropdown-item>
-            <el-dropdown-item command="logout">退出登录</el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed} from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useClusterStore } from '../stores/cluster'
 import { useThemeStore } from '../stores/theme'
 import { ElMessage } from 'element-plus'
+import { invoke } from '@tauri-apps/api/core';
+import type { ClusterConfig } from '../stores/cluster'
+
 
 const route = useRoute()
 const router = useRouter()
@@ -106,23 +94,13 @@ const handleClusterChange = (clusterId: string) => {
 const goToClusterManagement = () => {
   router.push('/cluster-management')
 }
-
-const handleCommand = (command: string) => {
-  switch (command) {
-    case 'profile':
-      ElMessage.info('个人信息功能开发中')
-      break
-    case 'settings':
-      router.push('/settings')
-      break
-    case 'about':
-      router.push('/about')
-      break
-    case 'logout':
-      ElMessage.info('退出登录功能开发中')
-      break
-  }
-}
+onMounted(() => {
+  invoke<ClusterConfig[]>('cluster_list').then(result => {
+     result.forEach(cluster => {
+      clusterStore.addCluster(cluster)
+     })
+  })
+})
 </script>
 
 <style scoped>
