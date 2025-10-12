@@ -104,7 +104,7 @@ export function deepClone<T>(obj: T): T {
  * @returns 防抖后的函数
  */
 export function debounce<T extends (...args: any[]) => any>(func: T, delay = 300): (...args: Parameters<T>) => void {
-  let timeoutId: NodeJS.Timeout | null = null
+  let timeoutId: number | null = null
   
   return function(this: any, ...args: Parameters<T>) {
     const context = this

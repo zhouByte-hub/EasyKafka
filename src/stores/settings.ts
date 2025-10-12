@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export interface AppSettings {
-  theme: 'light' | 'dark' | 'auto'
+  theme: 'light' | 'dark' | 'system'
   language: string
   autoRefreshInterval: number
   messageDisplayLimit: number
@@ -72,9 +72,15 @@ export interface AdvancedSettings {
   checkForUpdates: boolean
 }
 
+export interface CommonResult{
+  code: number,
+  data: any,
+  msg: string,
+}
+
 export const useSettingsStore = defineStore('settings', () => {
   const settings = ref<AppSettings>({
-    theme: 'auto',
+    theme: 'system',
     language: 'zh-CN',
     autoRefreshInterval: 30,
     messageDisplayLimit: 100,
@@ -149,9 +155,9 @@ export const useSettingsStore = defineStore('settings', () => {
     checkForUpdates: true
   })
 
-  function updateTheme(theme: 'light' | 'dark' | 'auto') {
+  function updateTheme(theme: 'light' | 'dark' | 'system') {
     settings.value.theme = theme
-    appearance.value.theme = theme as 'light' | 'dark' | 'system'
+    appearance.value.theme = theme
     saveSettings()
   }
 
@@ -192,7 +198,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
   function updateAppearance(newSettings: AppearanceSettings) {
     appearance.value = { ...newSettings }
-    settings.value.theme = newSettings.theme as 'light' | 'dark' | 'auto'
+    settings.value.theme = newSettings.theme
     saveSettings()
   }
 

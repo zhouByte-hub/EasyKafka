@@ -9,14 +9,13 @@ use sea_orm::EntityTrait;
 pub async fn create_kafka_admin_client(
     token: &str,
     config: &EasyKafkaConfig,
-) -> EasyKafkaResult<AdminClient<DefaultClientContext>> {
-    info!("create_kafka_admin_client");
+) -> EasyKafkaResult<(AdminClient<DefaultClientContext>, cluster::Model)> {
     let db_connect = get_connect(&config.database).await?;
     let find_result = cluster::Entity::find_by_id(token).one(&db_connect).await?;
 
-    info!("create_kafka_admin_client find_result: {:?}", find_result);
     match find_result {
         Some(connect) => {
+            info!("create_kafka_admin_client connect: {:?}", connect);
             let mut client_config = ClientConfig::new();
             client_config.set("bootstrap.servers", connect.servers.as_str());
             if let Some(username) = connect.username.as_deref() {
@@ -26,12 +25,13 @@ pub async fn create_kafka_admin_client(
                 client_config.set("sasl.password", password);
             }
             if connect.ssl {
-                client_config.set("security.protocol", "SASL_SSL");
-            } else {
-                client_config.set("security.protocol", "SASL_PLAINTEXT");
+                client_config.set(
+                    "security.protocol",
+                    connect.sasl.as_deref().unwrap_or("PLAINT"),
+                );
             }
             client_config.set("socket.timeout.ms", connect.timeout.to_string());
-            Ok(client_config.create()?)
+            Ok((client_config.create()?, connect))
         }
         None => Err(EasyKafkaError::KafkaConnectNotFound(token.to_string())),
     }

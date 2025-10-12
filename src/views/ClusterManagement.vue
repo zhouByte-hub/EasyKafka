@@ -13,26 +13,26 @@
       <el-table :data="clusters" style="width: 100%">
         <el-table-column prop="name" label="集群名称" width="200" />
         <el-table-column prop="bootstrapServers" label="Bootstrap Servers" />
-        <el-table-column prop="saslMechanism" label="SASL 机制" width="120">
+        <el-table-column prop="saslMechanism" label="SASL 机制" width="120" align="center">
           <template #default="scope">
             {{ scope.row.saslMechanism || '无' }}
           </template>
         </el-table-column>
-        <el-table-column prop="sslEnabled" label="SSL 启用" width="100">
+        <el-table-column prop="sslEnabled" label="SSL 启用" width="100" align="center">
           <template #default="scope">
             <el-tag :type="scope.row.sslEnabled ? 'success' : 'info'">
               {{ scope.row.sslEnabled ? '是' : '否' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="isActive" label="状态" width="100">
+        <el-table-column prop="isActive" label="状态" width="100" align="center">
           <template #default="scope">
             <el-tag :type="scope.row.isActive ? 'success' : 'danger'">
               {{ scope.row.isActive ? '已连接' : '未连接' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="250">
+        <el-table-column label="操作" width="250" align="center">
           <template #default="scope">
             <el-button
               size="small"
@@ -136,6 +136,7 @@ import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'elem
 import { Plus } from '@element-plus/icons-vue'
 import type { ClusterConfig } from '../stores/cluster'
 import { invoke } from '@tauri-apps/api/core';
+import type { CommonResult } from '../stores/settings'
 
 const clusters = ref<ClusterConfig[]>([])
 
@@ -204,12 +205,12 @@ const deleteCluster = (cluster: ClusterConfig) => {
       type: 'warning'
     }
   ).then(() => {
-    invoke('delete_cluster', {token: cluster.id}).then(result => {
-      if(result.code === 0){
-        ElMessage.success(result.data)
+    invoke<CommonResult>('delete_cluster', {token: cluster.id}).then(result => {
+      if(result.code === 200){
+        ElMessage.success(result.msg)
         clusterList()
       }else{
-        ElMessage.error(result.data)
+        ElMessage.error(result.msg)
       }
     })
   })
@@ -218,14 +219,13 @@ const deleteCluster = (cluster: ClusterConfig) => {
 // 测试连接
 const testConnection = async (cluster: ClusterConfig) => {
   testingConnectionId.value = cluster.id
-  
   try {
-    // 这里应该调用API测试连接
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // 更新集群状态
-    ElMessage.success('连接测试成功')
+    const result = await invoke<CommonResult>('check_connect', {token: cluster.id})
+    if(result.code === 200){
+      ElMessage.success(result.msg)
+    }else{
+      ElMessage.error(result.msg)
+    }
   } catch (error) {
     ElMessage.error('连接测试失败')
   } finally {
@@ -241,14 +241,17 @@ const submitClusterForm = async () => {
     if (valid) {
       submitting.value = true
       try {
-        console.log(clusterForm)
-        invoke('cluster_create_or_update', {model: clusterForm}).then(_ => {
-           if(isEdit.value){
-             ElMessage.success('集群更新成功')
-           }else{
-             ElMessage.success('集群添加成功')
+        invoke<CommonResult>('cluster_create_or_update', {model: clusterForm}).then(result => {
+           if(result.code === 200) {
+             if(isEdit.value){
+               ElMessage.success('集群更新成功')
+             }else{
+               ElMessage.success('集群添加成功')
+             }
+             clusterList()
+           } else {
+             ElMessage.error(result.msg)
            }
-           clusterList()
         })        
         dialogVisible.value = false
       } catch (error) {

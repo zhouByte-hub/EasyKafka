@@ -1,12 +1,14 @@
-use crate::entity::response::cluster::ClusterListResponseBuilder;
-use crate::{config::EasyKafkaConfig, entity::response::cluster::ClusterListResponse};
 use crate::entity::db_entity::cluster;
+use crate::entity::response::cluster::ClusterListResponseBuilder;
 use crate::entity::response::common::CommonResponse;
 use crate::infra::kafka_infra::create_kafka_admin_client;
 use crate::infra::sql_infra::get_connect;
+use crate::{config::EasyKafkaConfig, entity::response::cluster::ClusterListResponse};
 use crate::{EasyKafkaError, EasyKafkaResult};
+use rdkafka::util::Timeout;
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, Set};
 use tauri::State;
+use tokio::time::Duration;
 use uuid::Uuid;
 
 #[tauri::command]
@@ -15,7 +17,7 @@ pub async fn cluster_list(
 ) -> EasyKafkaResult<Vec<ClusterListResponse>> {
     let db_connect = get_connect(&config.database).await?;
     let cluster = cluster::Entity::find().all(&db_connect).await?;
-    
+
     let mut result = Vec::new();
     for item in cluster {
         let response = ClusterListResponseBuilder::default()
@@ -27,7 +29,9 @@ pub async fn cluster_list(
             .sasl(item.sasl.clone())
             .connected(item.connected)
             .build()
-            .map_err(|e| EasyKafkaError::KafkaConnectNotFound(format!("Failed to build response: {:?}", e)))?;
+            .map_err(|e| {
+                EasyKafkaError::KafkaConnectNotFound(format!("Failed to build response: {:?}", e))
+            })?;
         result.push(response);
     }
     Ok(result)
@@ -76,9 +80,16 @@ pub async fn check_connect(
     if token.is_empty() {
         return Ok(CommonResponse::error("token不能为空".to_string()));
     }
-    match create_kafka_admin_client(token, &config).await {
-        Ok(_) => Ok(CommonResponse::success("连接成功".to_string())),
-        Err(e) => Ok(CommonResponse::error(format!("{:?}", e))),
+    let (admin_client, connect) = create_kafka_admin_client(token, &config).await?;
+    match admin_client.inner().fetch_metadata(
+        None,
+        Timeout::from(Duration::from_millis(connect.timeout as u64)),
+    ) {
+        Ok(metadata) => Ok(CommonResponse::success(format!(
+            "连接成功，broker数量: {}",
+            metadata.brokers().len()
+        ))),
+        Err(_) => Ok(CommonResponse::error("Kafka连接失败".to_string())),
     }
 }
 

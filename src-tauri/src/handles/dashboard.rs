@@ -15,12 +15,13 @@ pub async fn dashboard_statistics(
     config: State<'_, EasyKafkaConfig>,
 ) -> EasyKafkaResult<DashboardStatistics> {
     info!("dashboard_statistics token: {}", token);
-    let client = create_kafka_admin_client(token, &config).await?;
+    let (admin_client, connect) = create_kafka_admin_client(token, &config).await?;
     let mut result = DashboardStatistics::default();
 
-    let metadata = client
-        .inner()
-        .fetch_metadata(None, Timeout::from(Duration::from_secs(5)))?;
+    let metadata = admin_client.inner().fetch_metadata(
+        None,
+        Timeout::from(Duration::from_secs(connect.timeout as u64)),
+    )?;
     // broker
     result.set_broker_count(metadata.brokers().len());
 
@@ -38,7 +39,7 @@ pub async fn dashboard_statistics(
                 + partitions
                     .iter()
                     .map(|item| {
-                        let (high, low) = client.inner().fetch_watermarks(
+                        let (high, low) = admin_client.inner().fetch_watermarks(
                             topic.name(),
                             item.id(),
                             Timeout::from(Duration::from_secs(5)),

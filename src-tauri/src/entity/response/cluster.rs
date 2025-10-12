@@ -1,9 +1,8 @@
-
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Builder)]
-pub struct ClusterListResponse{
+pub struct ClusterListResponse {
     pub id: String,
 
     #[serde(rename = "bootstrapServers")]
@@ -22,5 +21,4 @@ pub struct ClusterListResponse{
 
     #[serde(rename = "isActive")]
     pub connected: bool,
-
 }

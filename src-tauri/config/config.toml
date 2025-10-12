@@ -5,7 +5,7 @@ min_connections = 10
 connect_timeout = 10
 idle_timeout = 5
 max_lifetime = 300
-sqlx_logging = true
+sqlx_logging = false
 
 [log]
 level = "INFO"

@@ -463,7 +463,7 @@ import {
   Setting, Brush, Connection, User, Promotion, 
   Monitor, Tools 
 } from '@element-plus/icons-vue'
-import { useSettingsStore } from '../stores/settings'
+import { useSettingsStore, type AppearanceSettings } from '../stores/settings'
 import { useClusterStore } from '../stores/cluster'
 
 const settingsStore = useSettingsStore()
@@ -487,7 +487,7 @@ const generalSettings = reactive({
 })
 
 // 外观设置
-const appearanceSettings = reactive({
+const appearanceSettings = reactive<AppearanceSettings>({
   theme: 'light',
   primaryColor: '#409EFF',
   compactMode: false,

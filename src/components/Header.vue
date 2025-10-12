@@ -74,11 +74,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { computed} from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useClusterStore } from '../stores/cluster'
 import { useThemeStore } from '../stores/theme'
-import { Sunny, Moon } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 const route = useRoute()

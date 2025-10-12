@@ -17,37 +17,37 @@ class Http {
 
   // 通用请求方法
   async request<T = any>(config: any): Promise<T> {
-    return mockResponse({})
+    return mockResponse({}) as unknown as T
   }
 
   // GET 请求
   async get<T = any>(url: string, config?: any): Promise<T> {
-    return mockResponse({})
+    return mockResponse({}) as unknown as T
   }
 
   // POST 请求
   async post<T = any>(url: string, data?: any, config?: any): Promise<T> {
-    return mockResponse({})
+    return mockResponse({}) as unknown as T
   }
 
   // PUT 请求
   async put<T = any>(url: string, data?: any, config?: any): Promise<T> {
-    return mockResponse({})
+    return mockResponse({}) as unknown as T
   }
 
   // DELETE 请求
   async delete<T = any>(url: string, config?: any): Promise<T> {
-    return mockResponse({})
+    return mockResponse({}) as unknown as T
   }
 
   // PATCH 请求
   async patch<T = any>(url: string, data?: any, config?: any): Promise<T> {
-    return mockResponse({})
+    return mockResponse({}) as unknown as T
   }
 
   // 上传文件
   async upload<T = any>(url: string, file: File, config?: any): Promise<T> {
-    return mockResponse({})
+    return mockResponse({}) as unknown as T
   }
 
   // 下载文件
