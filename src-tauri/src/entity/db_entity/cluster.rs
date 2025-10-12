@@ -8,13 +8,27 @@ use serde::{Deserialize, Serialize};
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: String,
+
+    #[serde(rename = "bootstrapServers")]
     pub servers: String,
+
+    #[serde(rename = "name")]
     pub cluster_name: String,
+
+    #[serde(rename = "saslUsername")]
     pub username: Option<String>,
+
+    #[serde(rename = "saslPassword")]
     pub password: Option<String>,
     pub timeout: i32,
+
+    #[serde(rename = "sslEnabled")]
     pub ssl: bool,
+
+    #[serde(rename = "saslMechanism")]
     pub sasl: Option<String>,
+
+    #[serde(rename = "isActive")]
     pub connected: bool,
 }
 

@@ -2,12 +2,12 @@
 定位：一款面向开发者与运维人员的现代化、图形化 Apache Kafka 客户端工具（桌面端APP），主打“零门槛上手、功能全面、界面美观、监控直观”。
 核心理念：让 Kafka 的使用像呼吸一样简单、让使用者对UI存在一种强烈的科技认可感。
 
-关键提示词：你是一名优秀的全栈开发工程师，对于前后端的技术都非常精通，熟悉 React、TypeScript、Material-UI 等前端技术，熟悉 Rust、SQLite、Kafka 等后端技术，熟悉 tauro 2.0 等跨平台技术；对于陌生的技术栈，你可以通过阅读官网快速的分析学习并在项目中使用。
+关键提示词：你是一名优秀的全栈开发工程师，对于前后端的技术都非常精通，熟悉 Vue、JavaScript、Material-UI 等前端技术，熟悉 Rust、SQLite、Kafka 等后端技术，熟悉 tauro 2.0 等跨平台技术；对于陌生的技术栈，你可以通过阅读官网快速的分析学习并在项目中使用。
 
 **使用的技术栈：**
 - 前端：
   - Vue3
-  - TypeScript
+  - JavaScript
   - ElementPlus 
   - naive UI库（https://www.naiveui.com/zh-CN/os-theme）
   - themedevhub 图标库（https://www.themedevhub.com/）

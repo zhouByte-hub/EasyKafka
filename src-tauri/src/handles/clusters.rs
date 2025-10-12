@@ -1,9 +1,10 @@
-use crate::config::EasyKafkaConfig;
+use crate::entity::response::cluster::ClusterListResponseBuilder;
+use crate::{config::EasyKafkaConfig, entity::response::cluster::ClusterListResponse};
 use crate::entity::db_entity::cluster;
 use crate::entity::response::common::CommonResponse;
 use crate::infra::kafka_infra::create_kafka_admin_client;
 use crate::infra::sql_infra::get_connect;
-use crate::EasyKafkaResult;
+use crate::{EasyKafkaError, EasyKafkaResult};
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, Set};
 use tauri::State;
 use uuid::Uuid;
@@ -11,9 +12,25 @@ use uuid::Uuid;
 #[tauri::command]
 pub async fn cluster_list(
     config: State<'_, EasyKafkaConfig>,
-) -> EasyKafkaResult<Vec<cluster::Model>> {
+) -> EasyKafkaResult<Vec<ClusterListResponse>> {
     let db_connect = get_connect(&config.database).await?;
-    Ok(cluster::Entity::find().all(&db_connect).await?)
+    let cluster = cluster::Entity::find().all(&db_connect).await?;
+    
+    let mut result = Vec::new();
+    for item in cluster {
+        let response = ClusterListResponseBuilder::default()
+            .id(item.id.clone())
+            .servers(item.servers.clone())
+            .cluster_name(item.cluster_name.clone())
+            .timeout(item.timeout)
+            .ssl(item.ssl)
+            .sasl(item.sasl.clone())
+            .connected(item.connected)
+            .build()
+            .map_err(|e| EasyKafkaError::KafkaConnectNotFound(format!("Failed to build response: {:?}", e)))?;
+        result.push(response);
+    }
+    Ok(result)
 }
 
 #[tauri::command]

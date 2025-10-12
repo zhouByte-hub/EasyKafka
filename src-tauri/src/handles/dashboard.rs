@@ -32,9 +32,9 @@ pub async fn dashboard_statistics(
         for topic in topics {
             let partitions = topic.partitions();
             // partition
-            result.set_partition_count(result.partition_count() + partitions.len());
+            result.set_partition_count(result.get_partition_count() + partitions.len());
             // lag
-            let count = result.lag_count()
+            let count = result.get_lag_count()
                 + partitions
                     .iter()
                     .map(|item| {

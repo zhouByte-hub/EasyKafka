@@ -131,14 +131,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { useClusterStore } from '../stores/cluster'
 import { Plus } from '@element-plus/icons-vue'
 import type { ClusterConfig } from '../stores/cluster'
+import { invoke } from '@tauri-apps/api/core';
 
-const clusterStore = useClusterStore()
-const clusters = computed(() => clusterStore.clusters)
+const clusters = ref<ClusterConfig[]>([])
 
 const dialogVisible = ref(false)
 const isEdit = ref(false)
@@ -181,6 +180,12 @@ const showAddClusterDialog = () => {
   dialogVisible.value = true
 }
 
+const clusterList = () => {
+  invoke<ClusterConfig[]>('cluster_list').then(result => {
+    clusters.value = result
+  })
+}
+
 // 编辑集群
 const editCluster = (cluster: ClusterConfig) => {
   isEdit.value = true
@@ -198,14 +203,16 @@ const deleteCluster = (cluster: ClusterConfig) => {
       cancelButtonText: '取消',
       type: 'warning'
     }
-  )
-    .then(() => {
-      clusterStore.deleteCluster(cluster.id)
-      ElMessage.success('集群删除成功')
+  ).then(() => {
+    invoke('delete_cluster', {token: cluster.id}).then(result => {
+      if(result.code === 0){
+        ElMessage.success(result.data)
+        clusterList()
+      }else{
+        ElMessage.error(result.data)
+      }
     })
-    .catch(() => {
-      // 用户取消删除
-    })
+  })
 }
 
 // 测试连接
@@ -218,11 +225,9 @@ const testConnection = async (cluster: ClusterConfig) => {
     await new Promise(resolve => setTimeout(resolve, 1000))
     
     // 更新集群状态
-    clusterStore.updateCluster(cluster.id, { isActive: true })
     ElMessage.success('连接测试成功')
   } catch (error) {
     ElMessage.error('连接测试失败')
-    clusterStore.updateCluster(cluster.id, { isActive: false })
   } finally {
     testingConnectionId.value = null
   }
@@ -235,18 +240,16 @@ const submitClusterForm = async () => {
   await clusterFormRef.value.validate(async (valid) => {
     if (valid) {
       submitting.value = true
-      
       try {
-        if (isEdit.value) {
-          // 更新集群
-          clusterStore.updateCluster(clusterForm.id, { ...clusterForm })
-          ElMessage.success('集群更新成功')
-        } else {
-          // 添加集群
-          clusterStore.addCluster({ ...clusterForm })
-          ElMessage.success('集群添加成功')
-        }
-        
+        console.log(clusterForm)
+        invoke('cluster_create_or_update', {model: clusterForm}).then(_ => {
+           if(isEdit.value){
+             ElMessage.success('集群更新成功')
+           }else{
+             ElMessage.success('集群添加成功')
+           }
+           clusterList()
+        })        
         dialogVisible.value = false
       } catch (error) {
         ElMessage.error('操作失败')
@@ -262,7 +265,6 @@ const resetForm = () => {
   if (clusterFormRef.value) {
     clusterFormRef.value.resetFields()
   }
-  
   Object.assign(clusterForm, {
     id: '',
     name: '',
@@ -275,6 +277,12 @@ const resetForm = () => {
     isActive: false
   })
 }
+
+// 在组件挂载时调用clusterList方法加载数据
+onMounted(() => {
+  clusterList()
+})
+
 </script>
 
 <style scoped>
