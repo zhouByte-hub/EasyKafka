@@ -96,7 +96,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh, ArrowUp, ArrowDown, Monitor, DataLine, Connection, Document, Histogram, PieChart, TrendCharts } from '@element-plus/icons-vue'
@@ -111,20 +111,20 @@ const messageRateChartType = ref('both')
 const topicDistributionMetric = ref('messages')
 
 // 图表引用
-const messageRateChartRef = ref<HTMLDivElement | null>(null)
-const clusterStatusChartRef = ref<HTMLDivElement | null>(null)
-const topicDistributionChartRef = ref<HTMLDivElement | null>(null)
-const consumerGroupLagChartRef = ref<HTMLDivElement | null>(null)
-const diskUsageChartRef = ref<HTMLDivElement | null>(null)
-const networkIOChartRef = ref<HTMLDivElement | null>(null)
+const messageRateChartRef = ref(null)
+const clusterStatusChartRef = ref(null)
+const topicDistributionChartRef = ref(null)
+const consumerGroupLagChartRef = ref(null)
+const diskUsageChartRef = ref(null)
+const networkIOChartRef = ref(null)
 
 // 图表实例
-let messageRateChart: echarts.ECharts | null = null
-let clusterStatusChart: echarts.ECharts | null = null
-let topicDistributionChart: echarts.ECharts | null = null
-let consumerGroupLagChart: echarts.ECharts | null = null
-let diskUsageChart: echarts.ECharts | null = null
-let networkIOChart: echarts.ECharts | null = null
+let messageRateChart = null
+let clusterStatusChart = null
+let topicDistributionChart = null
+let consumerGroupLagChart = null
+let diskUsageChart = null
+let networkIOChart = null
 
 // 概览卡片数据
 const overviewCards = reactive([
@@ -473,7 +473,7 @@ const updateDiskUsageChart = () => {
   
   // 生成模拟数据
   const brokers = ['Broker-1', 'Broker-2', 'Broker-3']
-  const usedData: any[] = []
+  const usedData = []
   const totalData = []
   
   for (let i = 0; i < brokers.length; i++) {

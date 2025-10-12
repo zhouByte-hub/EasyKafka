@@ -76,7 +76,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Connection, Refresh } from '@element-plus/icons-vue'

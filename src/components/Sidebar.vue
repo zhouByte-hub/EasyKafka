@@ -69,7 +69,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
@@ -90,7 +90,7 @@ const isCollapse = ref(false)
 
 const activeMenu = computed(() => route.path)
 
-const handleSelect = (index: string) => {
+const handleSelect = (index) => {
   router.push(index)
 }
 

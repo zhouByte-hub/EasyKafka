@@ -5,7 +5,7 @@ import { ref, computed, watch } from 'vue'
 
 export const useThemeStore = defineStore('theme', () => {
   // 状态
-  const theme = ref<'light' | 'dark'>('light')
+  const theme = ref('light')
   const isDark = ref(false)
   
   // 计算属性
@@ -14,7 +14,7 @@ export const useThemeStore = defineStore('theme', () => {
   })
   
   // 方法
-  const setTheme = (newTheme: 'light' | 'dark') => {
+  const setTheme = (newTheme) => {
     theme.value = newTheme
     updateTheme()
   }
@@ -45,7 +45,7 @@ export const useThemeStore = defineStore('theme', () => {
   
   const initTheme = () => {
     // 从本地存储获取主题设置
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null
+    const savedTheme = localStorage.getItem('theme')
     if (savedTheme) {
       theme.value = savedTheme
     }

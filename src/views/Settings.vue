@@ -456,7 +456,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
@@ -474,7 +474,7 @@ const clusters = computed(() => clusterStore.clusters)
 const activeMenu = ref('general')
 
 // 处理菜单选择
-const handleMenuSelect = (index: string) => {
+const handleMenuSelect = (index) => {
   activeMenu.value = index
 }
 

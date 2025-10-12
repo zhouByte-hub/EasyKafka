@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import { resolve } from "path";
 
-// @ts-expect-error process is a nodejs global
+// 获取开发主机
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
@@ -49,8 +49,8 @@ export default defineConfig(async () => ({
   
   // 构建配置
   build: {
-    target: "esnext",
-    minify: "terser",
+    target: 'esnext',
+    minify: 'terser',
     terserOptions: {
       compress: {
         drop_console: true,
@@ -59,10 +59,10 @@ export default defineConfig(async () => ({
     },
     rollupOptions: {
       output: {
-        chunkFileNames: "js/[name]-[hash].js",
-        entryFileNames: "js/[name]-[hash].js",
-        assetFileNames: "[ext]/[name]-[hash].[ext]",
+        chunkFileNames: 'js/[name]-[hash].js',
+        entryFileNames: 'js/[name]-[hash].js',
+        assetFileNames: '[ext]/[name]-[hash].[ext]',
       },
     },
-  },
+  }
 }));

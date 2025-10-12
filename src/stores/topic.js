@@ -1,27 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-export interface Topic {
-  name: string
-  partitionCount: number
-  replicationFactor: number
-  config: Record<string, string>
-  partitions: Partition[]
-}
-
-export interface Partition {
-  id: number
-  leader: number
-  replicas: number[]
-  isr: number[]
-  offset: number
-  size: number
-}
-
 export const useTopicStore = defineStore('topic', () => {
-  const topics = ref<Topic[]>([])
+  const topics = ref([])
   const loading = ref(false)
-  const error = ref<string | null>(null)
+  const error = ref(null)
 
   function fetchTopics() {
     // 这里应该调用API获取主题列表
@@ -50,14 +33,14 @@ export const useTopicStore = defineStore('topic', () => {
     }, 500)
   }
 
-  function createTopic(topic: Omit<Topic, 'partitions'>) {
+  function createTopic(topic) {
     // 这里应该调用API创建主题
     loading.value = true
     error.value = null
     
     // 模拟API调用
     setTimeout(() => {
-      const newTopic: Topic = {
+      const newTopic = {
         ...topic,
         partitions: Array.from({ length: topic.partitionCount }, (_, i) => ({
           id: i,
@@ -73,7 +56,7 @@ export const useTopicStore = defineStore('topic', () => {
     }, 500)
   }
 
-  function deleteTopic(topicName: string) {
+  function deleteTopic(topicName) {
     // 这里应该调用API删除主题
     loading.value = true
     error.value = null
@@ -85,7 +68,7 @@ export const useTopicStore = defineStore('topic', () => {
     }, 500)
   }
 
-  function updateTopicConfig(topicName: string, config: Record<string, string>) {
+  function updateTopicConfig(topicName, config) {
     // 这里应该调用API更新主题配置
     loading.value = true
     error.value = null

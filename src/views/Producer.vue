@@ -236,12 +236,11 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useTopicStore } from '../stores/topic'
 import { Promotion, Delete, Plus } from '@element-plus/icons-vue'
-import type { Topic } from '../stores/topic'
 
 const topicStore = useTopicStore()
 const topics = computed(() => topicStore.topics)
@@ -256,7 +255,7 @@ const messageForm = reactive({
   value: '',
   format: 'text',
   headers: [{ key: '', value: '' }],
-  partition: undefined as number | undefined,
+  partition: undefined,
   delay: 0
 })
 
@@ -268,12 +267,7 @@ const batchForm = reactive({
 })
 
 // 发送历史
-const sendHistory = ref<Array<{
-  topic: string
-  message: string
-  timestamp: Date
-  success: boolean
-}>>([])
+const sendHistory = ref([])
 
 onMounted(() => {
   topicStore.fetchTopics()
@@ -379,7 +373,7 @@ const addHeader = () => {
 }
 
 // 移除Header
-const removeHeader = (index: number) => {
+const removeHeader = (index) => {
   if (messageForm.headers.length > 1) {
     messageForm.headers.splice(index, 1)
   }
@@ -391,7 +385,7 @@ const clearHistory = () => {
 }
 
 // 格式化时间
-const formatTime = (date: Date) => {
+const formatTime = (date) => {
   return new Intl.DateTimeFormat('zh-CN', {
     hour: '2-digit',
     minute: '2-digit',
@@ -400,7 +394,7 @@ const formatTime = (date: Date) => {
 }
 
 // 截断消息
-const truncateMessage = (message: string) => {
+const truncateMessage = (message) => {
   if (message.length <= 50) {
     return message
   }

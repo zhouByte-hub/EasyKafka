@@ -1,37 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-export interface ConsumerGroup {
-  groupId: string
-  state: string
-  members: ConsumerGroupMember[]
-  partitions: ConsumerGroupPartition[]
-  offset: number
-  lag: number
-  lastSeen: string
-}
-
-export interface ConsumerGroupMember {
-  memberId: string
-  clientId: string
-  host: string
-  assignments: number[]
-}
-
-export interface ConsumerGroupPartition {
-  topic: string
-  partition: number
-  offset: number
-  lag: number
-  leader: number
-}
-
 export const useConsumerGroupStore = defineStore('consumerGroup', () => {
-  const consumerGroups = ref<ConsumerGroup[]>([])
+  const consumerGroups = ref([])
   const loading = ref(false)
-  const error = ref<string | null>(null)
+  const error = ref(null)
 
-  function fetchConsumerGroups(clusterId: string) {
+  function fetchConsumerGroups(clusterId) {
     // 这里应该调用API获取消费者组列表
     loading.value = true
     error.value = null
@@ -70,7 +45,7 @@ export const useConsumerGroupStore = defineStore('consumerGroup', () => {
     }, 500)
   }
 
-  function getConsumerGroupDetail(clusterId: string, groupId: string) {
+  function getConsumerGroupDetail(clusterId, groupId) {
     // 这里应该调用API获取消费者组详情
     loading.value = true
     error.value = null
@@ -89,11 +64,11 @@ export const useConsumerGroupStore = defineStore('consumerGroup', () => {
   }
 
   function resetConsumerGroupOffset(
-    clusterId: string, 
-    groupId: string, 
-    topic: string, 
-    resetTo: 'earliest' | 'latest' | 'timestamp' | 'offset',
-    value?: number | string
+    clusterId, 
+    groupId, 
+    topic, 
+    resetTo,
+    value
   ) {
     // 这里应该调用API重置消费者组偏移量
     loading.value = true
@@ -112,7 +87,7 @@ export const useConsumerGroupStore = defineStore('consumerGroup', () => {
     }, 500)
   }
 
-  function deleteConsumerGroup(clusterId: string, groupId: string) {
+  function deleteConsumerGroup(clusterId, groupId) {
     // 这里应该调用API删除消费者组
     loading.value = true
     error.value = null

@@ -1,77 +1,39 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-export interface ClusterMetrics {
-  brokerCount: number
-  onlineBrokerCount: number
-  topicCount: number
-  partitionCount: number
-  messagesInPerSec: number
-  messagesOutPerSec: number
-  averageMessageSize: number
-  totalLag: number
-  diskUsage: number
-  diskUsageTrend: number[]
-  networkIn: number
-  networkOut: number
-  timestamp: string
-}
-
-export interface TopicMetrics {
-  topic: string
-  partitions: PartitionMetrics[]
-  messageSizeDistribution: {
-    range: string
-    count: number
-  }[]
-  leaderDistribution: {
-    brokerId: number
-    partitionCount: number
-  }[]
-}
-
-export interface PartitionMetrics {
-  partition: number
-  leader: number
-  messagesInPerSec: number
-  messagesOutPerSec: number
-  offset: number
-  lag: number
-  size: number
-}
-
-export interface ConsumerGroupMetrics {
-  groupId: string
-  members: ConsumerMemberMetrics[]
-  partitionLagTrend: {
-    partition: number
-    lag: number[]
-    timestamps: string[]
-  }[]
-  rebalanceEvents: {
-    timestamp: string
-    type: string
-    details: string
-  }[]
-}
-
-export interface ConsumerMemberMetrics {
-  memberId: string
-  clientId: string
-  host: string
-  messagesConsumedPerSec: number
-  assignedPartitions: number[]
+// 定义常量对象来代替TypeScript接口
+export const METRICS_TYPES = {
+  // 集群指标类型常量
+  CLUSTER_METRICS: {
+    BROKER_COUNT: 'brokerCount',
+    ONLINE_BROKER_COUNT: 'onlineBrokerCount',
+    TOPIC_COUNT: 'topicCount',
+    PARTITION_COUNT: 'partitionCount',
+    MESSAGES_IN_PER_SEC: 'messagesInPerSec',
+    MESSAGES_OUT_PER_SEC: 'messagesOutPerSec',
+    AVERAGE_MESSAGE_SIZE: 'averageMessageSize',
+    TOTAL_LAG: 'totalLag',
+    DISK_USAGE: 'diskUsage'
+  },
+  // 时间范围常量
+  TIME_RANGES: {
+    '5M': '5m',
+    '15M': '15m',
+    '1H': '1h',
+    '6H': '6h',
+    '24H': '24h'
+  }
 }
 
 export const useMetricsStore = defineStore('metrics', () => {
-  const clusterMetrics = ref<ClusterMetrics | null>(null)
-  const topicMetrics = ref<TopicMetrics | null>(null)
-  const consumerGroupMetrics = ref<ConsumerGroupMetrics | null>(null)
+  const clusterMetrics = ref(null)
+  const topicMetrics = ref(null)
+  const consumerGroupMetrics = ref(null)
   const loading = ref(false)
-  const error = ref<string | null>(null)
+  const error = ref(null)
   const timeRange = ref('1h') // 5m, 15m, 1h, 6h, 24h
 
-  function fetchClusterMetrics(clusterId: string) {
+  function fetchClusterMetrics(clusterId) {
     // 这里应该调用API获取集群指标
     loading.value = true
     error.value = null
@@ -97,7 +59,7 @@ export const useMetricsStore = defineStore('metrics', () => {
     }, 500)
   }
 
-  function fetchTopicMetrics(clusterId: string, topic: string) {
+  function fetchTopicMetrics(clusterId, topic) {
     // 这里应该调用API获取主题指标
     loading.value = true
     error.value = null
@@ -151,7 +113,7 @@ export const useMetricsStore = defineStore('metrics', () => {
     }, 500)
   }
 
-  function fetchConsumerGroupMetrics(clusterId: string, groupId: string) {
+  function fetchConsumerGroupMetrics(clusterId, groupId) {
     // 这里应该调用API获取消费者组指标
     loading.value = true
     error.value = null
@@ -223,11 +185,11 @@ export const useMetricsStore = defineStore('metrics', () => {
     }, 500)
   }
 
-  function setTimeRange(range: string) {
+  function setTimeRange(range) {
     timeRange.value = range
   }
 
-  function startAutoRefresh(clusterId: string, interval: number = 30000) {
+  function startAutoRefresh(clusterId, interval = 30000) {
     // 启动自动刷新
     const refresh = () => {
       if (clusterMetrics.value) {
@@ -248,7 +210,7 @@ export const useMetricsStore = defineStore('metrics', () => {
     return setInterval(refresh, interval)
   }
 
-  function stopAutoRefresh(timerId: number) {
+  function stopAutoRefresh(timerId) {
     clearInterval(timerId)
   }
 

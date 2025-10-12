@@ -1,79 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-export interface AppSettings {
-  theme: 'light' | 'dark' | 'auto'
-  language: string
-  autoRefreshInterval: number
-  messageDisplayLimit: number
-  logRetentionDays: number
-  shortcuts: Record<string, string>
-}
-
 // 扩展设置接口，包含所有设置类别
-export interface GeneralSettings {
-  language: string
-  autoRefreshInterval: number
-  autoConnectOnStartup: boolean
-  defaultCluster: string
-}
-
-export interface AppearanceSettings {
-  theme: 'light' | 'dark' | 'system'
-  primaryColor: string
-  compactMode: boolean
-  showTableBorder: boolean
-  messageDisplayLines: number
-}
-
-export interface ClusterSettings {
-  connectionTimeout: number
-  requestTimeout: number
-  heartbeatInterval: number
-  metadataRefreshInterval: number
-  enableSSL: boolean
-  enableSASL: boolean
-  saslMechanism: string
-}
-
-export interface ConsumerSettings {
-  autoCommit: boolean
-  autoCommitInterval: number
-  sessionTimeout: number
-  maxPollRecords: number
-  maxPollInterval: number
-  defaultOffset: string
-}
-
-export interface ProducerSettings {
-  acks: string
-  retries: number
-  batchSize: number
-  lingerMs: number
-  bufferMemory: number
-  compressionType: string
-}
-
-export interface MonitoringSettings {
-  enableRealTimeMonitoring: boolean
-  dataRetentionDays: number
-  chartRefreshInterval: number
-  defaultTimeRange: string
-  enableAlerts: boolean
-  alertEmail: string
-}
-
-export interface AdvancedSettings {
-  logLevel: string
-  maxLogFileSize: number
-  logRetentionDays: number
-  enableDebugMode: boolean
-  enableTelemetry: boolean
-  checkForUpdates: boolean
-}
-
 export const useSettingsStore = defineStore('settings', () => {
-  const settings = ref<AppSettings>({
+  const settings = ref({
     theme: 'auto',
     language: 'zh-CN',
     autoRefreshInterval: 30,
@@ -88,14 +18,14 @@ export const useSettingsStore = defineStore('settings', () => {
   })
 
   // 各类设置
-  const general = ref<GeneralSettings>({
+  const general = ref({
     language: 'zh-CN',
     autoRefreshInterval: 30,
     autoConnectOnStartup: false,
     defaultCluster: ''
   })
 
-  const appearance = ref<AppearanceSettings>({
+  const appearance = ref({
     theme: 'light',
     primaryColor: '#409EFF',
     compactMode: false,
@@ -103,7 +33,7 @@ export const useSettingsStore = defineStore('settings', () => {
     messageDisplayLines: 3
   })
 
-  const cluster = ref<ClusterSettings>({
+  const cluster = ref({
     connectionTimeout: 5000,
     requestTimeout: 10000,
     heartbeatInterval: 3000,
@@ -113,7 +43,7 @@ export const useSettingsStore = defineStore('settings', () => {
     saslMechanism: 'PLAIN'
   })
 
-  const consumer = ref<ConsumerSettings>({
+  const consumer = ref({
     autoCommit: true,
     autoCommitInterval: 5000,
     sessionTimeout: 10000,
@@ -122,7 +52,7 @@ export const useSettingsStore = defineStore('settings', () => {
     defaultOffset: 'latest'
   })
 
-  const producer = ref<ProducerSettings>({
+  const producer = ref({
     acks: '1',
     retries: 0,
     batchSize: 16384,
@@ -131,7 +61,7 @@ export const useSettingsStore = defineStore('settings', () => {
     compressionType: 'none'
   })
 
-  const monitoring = ref<MonitoringSettings>({
+  const monitoring = ref({
     enableRealTimeMonitoring: true,
     dataRetentionDays: 7,
     chartRefreshInterval: 5,
@@ -140,7 +70,7 @@ export const useSettingsStore = defineStore('settings', () => {
     alertEmail: ''
   })
 
-  const advanced = ref<AdvancedSettings>({
+  const advanced = ref({
     logLevel: 'info',
     maxLogFileSize: 10,
     logRetentionDays: 30,
@@ -149,74 +79,74 @@ export const useSettingsStore = defineStore('settings', () => {
     checkForUpdates: true
   })
 
-  function updateTheme(theme: 'light' | 'dark' | 'auto') {
+  function updateTheme(theme) {
     settings.value.theme = theme
-    appearance.value.theme = theme as 'light' | 'dark' | 'system'
+    appearance.value.theme = theme
     saveSettings()
   }
 
-  function updateLanguage(language: string) {
+  function updateLanguage(language) {
     settings.value.language = language
     general.value.language = language
     saveSettings()
   }
 
-  function updateAutoRefreshInterval(interval: number) {
+  function updateAutoRefreshInterval(interval) {
     settings.value.autoRefreshInterval = interval
     general.value.autoRefreshInterval = interval
     saveSettings()
   }
 
-  function updateMessageDisplayLimit(limit: number) {
+  function updateMessageDisplayLimit(limit) {
     settings.value.messageDisplayLimit = limit
     saveSettings()
   }
 
-  function updateLogRetentionDays(days: number) {
+  function updateLogRetentionDays(days) {
     settings.value.logRetentionDays = days
     saveSettings()
   }
 
-  function updateShortcut(action: string, shortcut: string) {
+  function updateShortcut(action, shortcut) {
     settings.value.shortcuts[action] = shortcut
     saveSettings()
   }
 
   // 更新各类设置的方法
-  function updateGeneral(newSettings: GeneralSettings) {
+  function updateGeneral(newSettings) {
     general.value = { ...newSettings }
     settings.value.language = newSettings.language
     settings.value.autoRefreshInterval = newSettings.autoRefreshInterval
     saveSettings()
   }
 
-  function updateAppearance(newSettings: AppearanceSettings) {
+  function updateAppearance(newSettings) {
     appearance.value = { ...newSettings }
-    settings.value.theme = newSettings.theme as 'light' | 'dark' | 'auto'
+    settings.value.theme = newSettings.theme
     saveSettings()
   }
 
-  function updateCluster(newSettings: ClusterSettings) {
+  function updateCluster(newSettings) {
     cluster.value = { ...newSettings }
     saveSettings()
   }
 
-  function updateConsumer(newSettings: ConsumerSettings) {
+  function updateConsumer(newSettings) {
     consumer.value = { ...newSettings }
     saveSettings()
   }
 
-  function updateProducer(newSettings: ProducerSettings) {
+  function updateProducer(newSettings) {
     producer.value = { ...newSettings }
     saveSettings()
   }
 
-  function updateMonitoring(newSettings: MonitoringSettings) {
+  function updateMonitoring(newSettings) {
     monitoring.value = { ...newSettings }
     saveSettings()
   }
 
-  function updateAdvanced(newSettings: AdvancedSettings) {
+  function updateAdvanced(newSettings) {
     advanced.value = { ...newSettings }
     saveSettings()
   }

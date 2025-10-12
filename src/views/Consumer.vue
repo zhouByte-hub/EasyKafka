@@ -234,12 +234,11 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useTopicStore } from '../stores/topic'
 import { VideoPlay, VideoPause, Delete, Download, Search } from '@element-plus/icons-vue'
-import type { Topic, Partition } from '../stores/topic'
 
 const topicStore = useTopicStore()
 const topics = computed(() => topicStore.topics)
@@ -254,9 +253,9 @@ const filterKeyword = ref('')
 const consumerForm = reactive({
   topic: '',
   groupId: 'easy-kafka-consumer',
-  partition: undefined as number | undefined,
+  partition: undefined,
   offsetOption: 'latest',
-  timestamp: null as Date | null,
+  timestamp: null,
   offset: 0,
   limit: 100,
   autoCommit: true
@@ -269,20 +268,13 @@ const pagination = reactive({
 })
 
 // 消息列表
-const messages = ref<Array<{
-  partition: number
-  offset: number
-  timestamp: Date
-  key: string
-  value: string
-  headers: Record<string, string>
-}>>([])
+const messages = ref([])
 
 // 分区列表
-const partitions = ref<Partition[]>([])
+const partitions = ref([])
 
 // 模拟消费定时器
-let consumeTimer: number | null = null
+let consumeTimer = null
 
 onMounted(() => {
   topicStore.fetchTopics()
@@ -383,13 +375,13 @@ const exportMessages = () => {
 }
 
 // 显示消息详情
-const showMessageDetail = (message: any) => {
+const showMessageDetail = (message) => {
   selectedMessage.value = message
   messageDetailVisible.value = true
 }
 
 // 格式化时间
-const formatTime = (date: Date) => {
+const formatTime = (date) => {
   return new Intl.DateTimeFormat('zh-CN', {
     year: 'numeric',
     month: '2-digit',
@@ -401,7 +393,7 @@ const formatTime = (date: Date) => {
 }
 
 // 截断消息
-const truncateMessage = (message: string) => {
+const truncateMessage = (message) => {
   if (message.length <= 50) {
     return message
   }
@@ -409,7 +401,7 @@ const truncateMessage = (message: string) => {
 }
 
 // 格式化消息头
-const formatHeaders = (headers: Record<string, string>) => {
+const formatHeaders = (headers) => {
   return Object.entries(headers).map(([key, value]) => ({
     key,
     value
@@ -417,7 +409,7 @@ const formatHeaders = (headers: Record<string, string>) => {
 }
 
 // 格式化消息内容
-const formatMessageContent = (content: string) => {
+const formatMessageContent = (content) => {
   // 尝试解析JSON
   try {
     const parsed = JSON.parse(content)
@@ -428,11 +420,11 @@ const formatMessageContent = (content: string) => {
 }
 
 // 分页处理
-const handleSizeChange = (size: number) => {
+const handleSizeChange = (size) => {
   pagination.pageSize = size
 }
 
-const handleCurrentChange = (page: number) => {
+const handleCurrentChange = (page) => {
   pagination.currentPage = page
 }
 

@@ -1,35 +1,20 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
-export interface LogEntry {
-  id: string
-  timestamp: string
-  level: 'info' | 'warn' | 'error' | 'debug'
-  message: string
-  source: string
-  details?: Record<string, any>
-}
-
 export const useLogStore = defineStore('log', () => {
-  const logs = ref<LogEntry[]>([])
+  const logs = ref([])
   const loading = ref(false)
-  const error = ref<string | null>(null)
-  const filter = ref<{
-    level?: 'info' | 'warn' | 'error' | 'debug'
-    source?: string
-    search?: string
-    startTime?: string
-    endTime?: string
-  }>({})
+  const error = ref(null)
+  const filter = ref({})
 
-  function fetchLogs(clusterId?: string, limit: number = 100) {
+  function fetchLogs(clusterId, limit = 100) {
     // 这里应该调用API获取日志
     loading.value = true
     error.value = null
     
     // 模拟API调用
     setTimeout(() => {
-      const mockLogs: LogEntry[] = [
+      const mockLogs = [
         {
           id: '1',
           timestamp: new Date(Date.now() - 3600000).toISOString(),
@@ -78,12 +63,12 @@ export const useLogStore = defineStore('log', () => {
   }
 
   function addLog(
-    level: 'info' | 'warn' | 'error' | 'debug',
-    message: string,
-    source: string,
-    details?: Record<string, any>
+    level,
+    message,
+    source,
+    details
   ) {
-    const newLog: LogEntry = {
+    const newLog = {
       id: Date.now().toString(),
       timestamp: new Date().toISOString(),
       level,
@@ -107,7 +92,7 @@ export const useLogStore = defineStore('log', () => {
     logs.value = []
   }
 
-  function setFilter(newFilter: Partial<typeof filter.value>) {
+  function setFilter(newFilter) {
     filter.value = { ...filter.value, ...newFilter }
   }
 
@@ -147,7 +132,7 @@ export const useLogStore = defineStore('log', () => {
     return result
   })
 
-  function exportLogs(format: 'json' | 'csv' = 'json') {
+  function exportLogs(format = 'json') {
     if (format === 'json') {
       return JSON.stringify(filteredLogs.value, null, 2)
     } else if (format === 'csv') {

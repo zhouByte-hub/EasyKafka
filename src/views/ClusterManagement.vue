@@ -130,20 +130,19 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
-import type { ClusterConfig } from '../stores/cluster'
 import { invoke } from '@tauri-apps/api/core';
 
-const clusters = ref<ClusterConfig[]>([])
+const clusters = ref([])
 
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const submitting = ref(false)
-const testingConnectionId = ref<string | null>(null)
-const clusterFormRef = ref<FormInstance>()
+const testingConnectionId = ref(null)
+const clusterFormRef = ref(null)
 
 // 集群表单数据
 const clusterForm = reactive({
@@ -159,7 +158,7 @@ const clusterForm = reactive({
 })
 
 // 表单验证规则
-const clusterRules: FormRules = {
+const clusterRules = {
   name: [
     { required: true, message: '请输入集群名称', trigger: 'blur' },
     { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
@@ -181,20 +180,20 @@ const showAddClusterDialog = () => {
 }
 
 const clusterList = () => {
-  invoke<ClusterConfig[]>('cluster_list').then(result => {
+  invoke('cluster_list').then(result => {
     clusters.value = result
   })
 }
 
 // 编辑集群
-const editCluster = (cluster: ClusterConfig) => {
+const editCluster = (cluster) => {
   isEdit.value = true
   Object.assign(clusterForm, cluster)
   dialogVisible.value = true
 }
 
 // 删除集群
-const deleteCluster = (cluster: ClusterConfig) => {
+const deleteCluster = (cluster) => {
   ElMessageBox.confirm(
     `确定要删除集群 "${cluster.name}" 吗？此操作不可撤销。`,
     '删除确认',
@@ -216,7 +215,7 @@ const deleteCluster = (cluster: ClusterConfig) => {
 }
 
 // 测试连接
-const testConnection = async (cluster: ClusterConfig) => {
+const testConnection = async (cluster) => {
   testingConnectionId.value = cluster.id
   
   try {

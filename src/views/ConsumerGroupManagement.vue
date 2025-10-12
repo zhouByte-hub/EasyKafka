@@ -222,59 +222,32 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Close, Search } from '@element-plus/icons-vue'
 
-// 消费者组数据类型
-interface ConsumerGroup {
-  groupId: string
-  state: string
-  coordinator: string
-  members: number
-  partitions: number
-  totalLag: number
-  memberDetails: Array<{
-    memberId: string
-    clientId: string
-    host: string
-    assignment: Array<{
-      topic: string
-      partitions: number[]
-    }>
-  }>
-  partitionDetails: Array<{
-    topic: string
-    partition: number
-    currentOffset: number
-    endOffset: number
-    lag: number
-    consumerId: string
-  }>
-}
-
 // 状态变量
 const loading = ref(false)
 const filterKeyword = ref('')
-const selectedGroup = ref<ConsumerGroup | null>(null)
+const selectedGroup = ref(null)
 const activeTab = ref('overview')
 const resetOffsetDialogVisible = ref(false)
 const deleteDialogVisible = ref(false)
-const groupToReset = ref<ConsumerGroup | null>(null)
-const groupToDelete = ref<ConsumerGroup | null>(null)
-const offsetChartRef = ref<HTMLDivElement | null>(null)
+const groupToReset = ref(null)
+const groupToDelete = ref(null)
+const offsetChartRef = ref(null)
 
 // 重置表单
 const resetForm = reactive({
   resetType: 'earliest',
-  timestamp: null as Date | null,
+  timestamp: null,
   offset: 0,
-  partition: null as number | null
+  partition: null
 })
 
 // 消费者组列表
-const consumerGroups = ref<ConsumerGroup[]>([])
+const consumerGroups = ref([])
 
 // 过滤后的消费者组
 const filteredGroups = computed(() => {
@@ -408,19 +381,19 @@ const refreshConsumerGroups = () => {
 }
 
 // 选择消费者组
-const selectGroup = (group: ConsumerGroup) => {
+const selectGroup = (group) => {
   selectedGroup.value = group
   activeTab.value = 'overview'
 }
 
 // 显示消费者组详情
-const showGroupDetails = (group: ConsumerGroup) => {
+const showGroupDetails = (group) => {
   selectedGroup.value = group
   activeTab.value = 'overview'
 }
 
 // 显示重置偏移量对话框
-const showResetOffsetDialog = (group: ConsumerGroup) => {
+const showResetOffsetDialog = (group) => {
   groupToReset.value = group
   resetForm.resetType = 'earliest'
   resetForm.timestamp = null
@@ -449,7 +422,7 @@ const resetOffset = async () => {
 }
 
 // 确认删除消费者组
-const confirmDeleteGroup = (group: ConsumerGroup) => {
+const confirmDeleteGroup = (group) => {
   groupToDelete.value = group
   deleteDialogVisible.value = true
 }
@@ -479,7 +452,7 @@ const deleteGroup = async () => {
 }
 
 // 获取消费者组状态类型
-const getGroupStateType = (state: string) => {
+const getGroupStateType = (state) => {
   switch (state.toLowerCase()) {
     case 'stable':
       return 'success'
@@ -495,7 +468,7 @@ const getGroupStateType = (state: string) => {
 }
 
 // 格式化数字
-const formatNumber = (num: number) => {
+const formatNumber = (num) => {
   if (num >= 10000) {
     return (num / 10000).toFixed(1) + 'w'
   }
@@ -506,7 +479,7 @@ const formatNumber = (num: number) => {
 }
 
 // 格式化分区分配
-const formatPartitionAssignment = (assignment: Array<{ topic: string; partitions: number[] }>) => {
+const formatPartitionAssignment = (assignment) => {
   return assignment.map(a => `${a.topic}: [${a.partitions.join(', ')}]`).join(', ')
 }
 </script>

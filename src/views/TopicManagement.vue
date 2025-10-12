@@ -242,12 +242,11 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useTopicStore } from '../stores/topic'
 import { Plus, Delete } from '@element-plus/icons-vue'
-import type { Topic } from '../stores/topic'
 
 const topicStore = useTopicStore()
 const topics = computed(() => topicStore.topics)
@@ -257,9 +256,9 @@ const addTopicDialogVisible = ref(false)
 const topicDetailDialogVisible = ref(false)
 const editConfigDialogVisible = ref(false)
 const submitting = ref(false)
-const topicFormRef = ref<FormInstance>()
-const configFormRef = ref<FormInstance>()
-const selectedTopic = ref<Topic | null>(null)
+const topicFormRef = ref(null)
+const configFormRef = ref(null)
+const selectedTopic = ref(null)
 
 // 主题表单数据
 const topicForm = reactive({
@@ -275,11 +274,11 @@ const topicForm = reactive({
 // 配置表单数据
 const configForm = reactive({
   name: '',
-  configItems: [] as { key: string; value: string }[]
+  configItems: []
 })
 
 // 表单验证规则
-const topicRules: FormRules = {
+const topicRules = {
   name: [
     { required: true, message: '请输入主题名称', trigger: 'blur' },
     { min: 1, max: 249, message: '长度在 1 到 249 个字符', trigger: 'blur' },
@@ -306,13 +305,13 @@ const showAddTopicDialog = () => {
 }
 
 // 查看主题详情
-const viewTopicDetail = (topic: Topic) => {
+const viewTopicDetail = (topic) => {
   selectedTopic.value = topic
   topicDetailDialogVisible.value = true
 }
 
 // 编辑主题配置
-const editTopicConfig = (topic: Topic) => {
+const editTopicConfig = (topic) => {
   configForm.name = topic.name
   configForm.configItems = Object.entries(topic.config).map(([key, value]) => ({
     key,
@@ -322,7 +321,7 @@ const editTopicConfig = (topic: Topic) => {
 }
 
 // 删除主题
-const deleteTopic = (topic: Topic) => {
+const deleteTopic = (topic) => {
   ElMessageBox.confirm(
     `确定要删除主题 "${topic.name}" 吗？此操作不可撤销。`,
     '删除确认',
@@ -351,7 +350,7 @@ const submitTopicForm = async () => {
       
       try {
         // 将配置项转换为对象
-        const config: Record<string, string> = {}
+        const config = {}
         topicForm.configItems.forEach(item => {
           if (item.key && item.value) {
             config[item.key] = item.value
@@ -385,7 +384,7 @@ const submitConfigForm = async () => {
   
   try {
     // 将配置项转换为对象
-    const config: Record<string, string> = {}
+    const config = {}
     configForm.configItems.forEach(item => {
       if (item.key && item.value) {
         config[item.key] = item.value
@@ -410,7 +409,7 @@ const addConfigItem = () => {
 }
 
 // 移除配置项
-const removeConfigItem = (index: number) => {
+const removeConfigItem = (index) => {
   topicForm.configItems.splice(index, 1)
 }
 
@@ -420,7 +419,7 @@ const addConfigItemToEdit = () => {
 }
 
 // 移除配置项从编辑表单
-const removeConfigItemFromEdit = (index: number) => {
+const removeConfigItemFromEdit = (index) => {
   configForm.configItems.splice(index, 1)
 }
 
@@ -442,14 +441,14 @@ const resetTopicForm = () => {
 }
 
 // 格式化配置
-const formatConfig = (config: Record<string, string>) => {
+const formatConfig = (config) => {
   return Object.entries(config)
     .map(([key, value]) => `${key}=${value}`)
     .join('\n')
 }
 
 // 格式化配置预览
-const formatConfigPreview = (config: Record<string, string>) => {
+const formatConfigPreview = (config) => {
   const entries = Object.entries(config)
   if (entries.length === 0) return '无配置'
   
@@ -461,7 +460,7 @@ const formatConfigPreview = (config: Record<string, string>) => {
 }
 
 // 格式化配置为表格数据
-const formatConfigForTable = (config: Record<string, string>) => {
+const formatConfigForTable = (config) => {
   return Object.entries(config).map(([key, value]) => ({
     key,
     value
@@ -469,7 +468,7 @@ const formatConfigForTable = (config: Record<string, string>) => {
 }
 
 // 获取主题总消息数
-const getTotalMessages = (topic: Topic) => {
+const getTotalMessages = (topic) => {
   return topic.partitions.reduce((total, partition) => total + partition.offset, 0)
 }
 </script>

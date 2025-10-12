@@ -73,7 +73,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useClusterStore } from '../stores/cluster'
@@ -99,7 +99,7 @@ const toggleTheme = () => {
   themeStore.toggleTheme()
 }
 
-const handleClusterChange = (clusterId: string) => {
+const handleClusterChange = (clusterId) => {
   clusterStore.setActiveCluster(clusterId)
   ElMessage.success(`已切换到集群: ${clusters.value.find(c => c.id === clusterId)?.name}`)
 }
@@ -108,7 +108,7 @@ const goToClusterManagement = () => {
   router.push('/cluster-management')
 }
 
-const handleCommand = (command: string) => {
+const handleCommand = (command) => {
   switch (command) {
     case 'profile':
       ElMessage.info('个人信息功能开发中')

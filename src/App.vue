@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useThemeStore } from './stores/theme'
@@ -9,7 +9,7 @@ const route = useRoute()
 const themeStore = useThemeStore()
 
 // 计算当前路由名称
-const routeName = computed(() => route.name as string)
+const routeName = computed(() => route.name)
 
 // 判断是否显示侧边栏和头部
 const showLayout = computed(() => {

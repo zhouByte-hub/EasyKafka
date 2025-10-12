@@ -132,38 +132,38 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Delete, Search } from '@element-plus/icons-vue'
 
 // 日志数据类型
-interface LogEntry {
-  id: string
-  timestamp: Date
-  level: 'info' | 'warning' | 'error'
-  module: string
-  action: string
-  message: string
-  user: string
-  ip: string
-  sessionId: string
-  data?: any
-}
+// interface LogEntry {
+//   id: string
+//   timestamp: Date
+//   level: 'info' | 'warning' | 'error'
+//   module: string
+//   action: string
+//   message: string
+//   user: string
+//   ip: string
+//   sessionId: string
+//   data?: any
+// }
 
 // 状态变量
 const loading = ref(false)
 const filterKeyword = ref('')
 const logLevel = ref('')
-const dateRange = ref<[Date, Date] | null>(null)
+const dateRange = ref(null)
 const currentPage = ref(1)
 const pageSize = ref(20)
 const totalLogs = ref(0)
 const detailsDialogVisible = ref(false)
-const selectedLog = ref<LogEntry | null>(null)
+const selectedLog = ref(null)
 
 // 日志列表
-const logs = ref<LogEntry[]>([])
+const logs = ref([])
 
 // 过滤后的日志
 const filteredLogs = computed(() => {
@@ -211,7 +211,7 @@ const fetchLogs = async () => {
     await new Promise(resolve => setTimeout(resolve, 500))
     
     // 模拟数据
-    const mockLogs: LogEntry[] = [
+    const mockLogs = [
       {
         id: '1',
         timestamp: new Date(Date.now() - 1000 * 60 * 5),
@@ -301,7 +301,7 @@ const fetchLogs = async () => {
     for (let i = 6; i <= 50; i++) {
       const modules = ['集群管理', '主题管理', '消息生产', '消息消费', '消费者组', '系统设置']
       const actions = ['添加', '删除', '修改', '查询', '刷新', '导出']
-      const levels: ('info' | 'warning' | 'error')[] = ['info', 'warning', 'error']
+      const levels = ['info', 'warning', 'error']
       const users = ['admin', 'user1', 'user2', 'user3']
       
       const randomModule = modules[Math.floor(Math.random() * modules.length)]
@@ -358,13 +358,13 @@ const clearLogs = async () => {
 }
 
 // 显示日志详情
-const showLogDetails = (log: LogEntry) => {
+const showLogDetails = (log) => {
   selectedLog.value = log
   detailsDialogVisible.value = true
 }
 
 // 获取日志级别类型
-const getLogLevelType = (level: string) => {
+const getLogLevelType = (level) => {
   switch (level.toLowerCase()) {
     case 'info':
       return 'success'
@@ -378,17 +378,17 @@ const getLogLevelType = (level: string) => {
 }
 
 // 格式化时间
-const formatTime = (timestamp: Date) => {
+const formatTime = (timestamp) => {
   return new Date(timestamp).toLocaleString()
 }
 
 // 处理页码变化
-const handleCurrentChange = (page: number) => {
+const handleCurrentChange = (page) => {
   currentPage.value = page
 }
 
 // 处理每页条数变化
-const handleSizeChange = (size: number) => {
+const handleSizeChange = (size) => {
   pageSize.value = size
   currentPage.value = 1
 }

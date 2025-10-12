@@ -1,33 +1,16 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-export interface Message {
-  topic: string
-  partition: number
-  offset: number
-  key?: string
-  value: string
-  timestamp: string
-  headers?: Record<string, string>
-}
-
-export interface ProducerMessage {
-  topic: string
-  key?: string
-  value: string
-  headers?: Record<string, string>
-  partition?: number
-  timestamp?: string
-}
-
+export 
+export 
 export interface ConsumerMessage extends Message {
   consumedAt: string
 }
 
 export const useMessageStore = defineStore('message', () => {
-  const messages = ref<Message[]>([])
-  const producerHistory = ref<ProducerMessage[]>([])
-  const consumerMessages = ref<ConsumerMessage[]>([])
+  const messages = ref([])
+  const producerHistory = ref([])
+  const consumerMessages = ref([])
   const loading = ref(false)
   const error = ref<string | null>(null)
   const isConsuming = ref(false)
