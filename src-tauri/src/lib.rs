@@ -33,6 +33,8 @@ pub async fn run() -> EasyKafkaResult<()> {
             handles::cluster_handles::cluster_create_or_update,
             handles::cluster_handles::check_connect,
             handles::cluster_handles::delete_cluster,
+            handles::topic_handles::load_topic_config_template,
+            handles::topic_handles::create_topic,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

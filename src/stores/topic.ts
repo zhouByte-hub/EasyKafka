@@ -5,7 +5,7 @@ export interface Topic {
   name: string
   partitionCount: number
   replicationFactor: number
-  config: Record<string, string>
+  properties: string
   partitions: Partition[]
 }
 
@@ -35,10 +35,10 @@ export const useTopicStore = defineStore('topic', () => {
           name: 'test-topic',
           partitionCount: 3,
           replicationFactor: 2,
-          config: {
+          properties: JSON.stringify({
             'cleanup.policy': 'delete',
             'retention.ms': '604800000'
-          },
+          }),
           partitions: [
             { id: 0, leader: 0, replicas: [0, 1], isr: [0, 1], offset: 100, size: 1024 },
             { id: 1, leader: 1, replicas: [1, 2], isr: [1, 2], offset: 200, size: 2048 },
@@ -94,7 +94,7 @@ export const useTopicStore = defineStore('topic', () => {
     setTimeout(() => {
       const topic = topics.value.find(t => t.name === topicName)
       if (topic) {
-        topic.config = { ...topic.config, ...config }
+        topic.properties = JSON.stringify({ ...JSON.parse(topic.properties), ...config })
       }
       loading.value = false
     }, 500)

@@ -238,8 +238,8 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useTopicStore } from '../stores/topic'
-import { VideoPlay, VideoPause, Delete, Download, Search } from '@element-plus/icons-vue'
-import type { Topic, Partition } from '../stores/topic'
+import { VideoPlay, VideoPause, Delete, Download } from '@element-plus/icons-vue'
+import type { Partition } from '../stores/topic'
 
 const topicStore = useTopicStore()
 const topics = computed(() => topicStore.topics)

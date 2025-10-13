@@ -58,7 +58,7 @@
     <el-dialog
       v-model="addTopicDialogVisible"
       title="创建主题"
-      width="600px"
+      width="670px"
     >
       <el-form
         ref="topicFormRef"
@@ -89,36 +89,44 @@
         </el-form-item>
         
         <el-form-item label="配置">
-          <div class="config-items">
-            <div
-              v-for="(config, index) in topicForm.configItems"
-              :key="index"
-              class="config-item"
+          <div style="border: 1px solid #dcdfe6; border-radius: 4px; overflow: hidden;">
+            <Codemirror
+              v-model="topicForm.configJson"
+              placeholder="请输入JSON格式的配置，支持注释（//）"
+              :extensions="[basicSetup, json(), isDark ? oneDark : EditorView.theme({}), EditorView.lineWrapping]"
+              :style="{ height: '300px', width: '600px' }"
+            />
+          </div>
+          <div style="margin-top: 8px; font-size: 12px; color: #909399;">
+            <el-popover
+              placement="top-start"
+              width="400"
+              trigger="hover"
             >
-              <el-input
-                v-model="config.key"
-                placeholder="配置键"
-                style="width: 45%"
-              />
-              <span class="config-separator">=</span>
-              <el-input
-                v-model="config.value"
-                placeholder="配置值"
-                style="width: 45%"
-              />
-              <el-button
-                type="danger"
-                size="small"
-                circle
-                @click="removeConfigItem(index)"
-              >
-                <el-icon><Delete /></el-icon>
-              </el-button>
-            </div>
-            <el-button type="primary" size="small" @click="addConfigItem">
-              <el-icon><Plus /></el-icon>
-              添加配置
-            </el-button>
+              <div style="padding: 10px;">
+                <h4 style="margin: 0 0 10px 0; font-size: 14px;">常用配置项说明</h4>
+                <table style="width: 100%;">
+                  <thead>
+                    <tr style="border-bottom: 1px solid #e0e0e0;">
+                      <th style="text-align: left; padding: 6px 0;">属性名</th>
+                      <th style="text-align: left; padding: 6px 0;">作用</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style="border-bottom: 1px solid #f0f0f0;" v-for="p_desc in mockPropertiesDesc">
+                      <td style="padding: 6px 0; font-family: monospace;">{{ p_desc.name }}</td>
+                      <td style="padding: 6px 0; font-size: 12px;">{{ p_desc.value }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <template #reference>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <el-icon><InfoFilled /></el-icon>
+                  <span>配置说明</span>
+                </div>
+              </template>
+            </el-popover>
           </div>
         </el-form-item>
       </el-form>
@@ -133,7 +141,7 @@
       </template>
     </el-dialog>
     
-    <!-- 主题详情对话框 -->
+    <!-- 主题详情对话框
     <el-dialog
       v-model="topicDetailDialogVisible"
       title="主题详情"
@@ -178,7 +186,7 @@
           <el-button @click="topicDetailDialogVisible = false">关闭</el-button>
         </span>
       </template>
-    </el-dialog>
+    </el-dialog> -->
     
     <!-- 编辑主题配置对话框 -->
     <el-dialog
@@ -196,36 +204,44 @@
         </el-form-item>
         
         <el-form-item label="配置">
-          <div class="config-items">
-            <div
-              v-for="(config, index) in configForm.configItems"
-              :key="index"
-              class="config-item"
+          <div style="border: 1px solid #dcdfe6; border-radius: 4px; overflow: hidden;">
+            <Codemirror
+              v-model="configForm.configJson"
+              placeholder="请输入JSON格式的配置，支持注释（//）"
+              :extensions="[basicSetup, json(), isDark ? oneDark : EditorView.theme({}), EditorView.lineWrapping]"
+              :style="{ height: '300px', width: '600px' }"
+            />
+          </div>
+          <div style="margin-top: 10px; color: #606266;">
+            <el-popover
+              placement="top-start"
+              width="400"
+              trigger="hover"
             >
-              <el-input
-                v-model="config.key"
-                placeholder="配置键"
-                style="width: 45%"
-              />
-              <span class="config-separator">=</span>
-              <el-input
-                v-model="config.value"
-                placeholder="配置值"
-                style="width: 45%"
-              />
-              <el-button
-                type="danger"
-                size="small"
-                circle
-                @click="removeConfigItemFromEdit(index)"
-              >
-                <el-icon><Delete /></el-icon>
-              </el-button>
-            </div>
-            <el-button type="primary" size="small" @click="addConfigItemToEdit">
-              <el-icon><Plus /></el-icon>
-              添加配置
-            </el-button>
+              <div style="padding: 10px;">
+                <h4 style="margin: 0 0 10px 0; font-size: 14px;">常用配置项说明</h4>
+                <table style="width: 100%; border-collapse: collapse;">
+                  <thead>
+                    <tr style="border-bottom: 1px solid #e0e0e0;">
+                      <th style="text-align: left; padding: 6px 0;">属性名</th>
+                      <th style="text-align: left; padding: 6px 0;">作用</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style="border-bottom: 1px solid #f0f0f0;" v-for="p_desc in mockPropertiesDesc">
+                      <td style="padding: 6px 0; font-family: monospace;">{{ p_desc.name }}</td>
+                      <td style="padding: 6px 0; font-size: 12px;">{{ p_desc.value }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <template #reference>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <el-icon><InfoFilled /></el-icon>
+                  <span>配置说明</span>
+                </div>
+              </template>
+            </el-popover>
           </div>
         </el-form-item>
       </el-form>
@@ -246,12 +262,20 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { useTopicStore } from '../stores/topic'
-import { Plus, Delete } from '@element-plus/icons-vue'
+import { useThemeStore } from '../stores/theme'
+import { Plus, InfoFilled } from '@element-plus/icons-vue'
 import type { Topic } from '../stores/topic'
+import { Codemirror } from 'vue-codemirror'
+import { EditorView, basicSetup } from 'codemirror'
+import { json } from '@codemirror/lang-json'
+import { oneDark } from '@codemirror/theme-one-dark'
+import { invoke } from '@tauri-apps/api/core'
 
 const topicStore = useTopicStore()
+const themeStore = useThemeStore()
 const topics = computed(() => topicStore.topics)
 const loading = computed(() => topicStore.loading)
+const isDark = computed(() => themeStore.currentTheme === 'dark')
 
 const addTopicDialogVisible = ref(false)
 const topicDetailDialogVisible = ref(false)
@@ -260,22 +284,41 @@ const submitting = ref(false)
 const topicFormRef = ref<FormInstance>()
 const configFormRef = ref<FormInstance>()
 const selectedTopic = ref<Topic | null>(null)
+const mockPropertiesDesc = ref([{
+  name: "cleanup.policy",
+  value: "删除策略，用于控制Kafka如何清理过期数据。设置为'delete'表示删除过期数据，'compact'表示日志压缩（只保留每个key的最新值）。"
+}, {
+  name: "retention.ms",
+  value: "消息保留时间，单位为毫秒。"
+}, {
+  name: "max.message.bytes", 
+  value: "最大消息大小，单位为字节。"
+}, {
+  name: "segment.bytes",
+  value: "日志段大小，单位为字节。"
+}, {
+  name: "segment.ms",
+  value: "日志段滚动时间，单位为毫秒。"
+}, {
+  name: "delete.retention.ms",
+  value: "删除保留时间，单位为毫秒。"
+}, {
+  name: "retention.bytes",
+  value: "日志保留大小，单位为字节；设置为-1表示无限制。"
+}])
 
 // 主题表单数据
 const topicForm = reactive({
   name: '',
   partitionCount: 1,
   replicationFactor: 1,
-  configItems: [
-    { key: 'cleanup.policy', value: 'delete' },
-    { key: 'retention.ms', value: '604800000' }
-  ]
+  configJson: ''
 })
 
 // 配置表单数据
 const configForm = reactive({
   name: '',
-  configItems: [] as { key: string; value: string }[]
+  configJson: '{}'
 })
 
 // 表单验证规则
@@ -295,8 +338,10 @@ const topicRules: FormRules = {
   ]
 }
 
-onMounted(() => {
+onMounted(async () => {
   topicStore.fetchTopics()
+  topicForm.configJson = await invoke<string>('load_topic_config_template')
+  console.log(topicForm.configJson)
 })
 
 // 显示添加主题对话框
@@ -314,10 +359,7 @@ const viewTopicDetail = (topic: Topic) => {
 // 编辑主题配置
 const editTopicConfig = (topic: Topic) => {
   configForm.name = topic.name
-  configForm.configItems = Object.entries(topic.config).map(([key, value]) => ({
-    key,
-    value
-  }))
+  configForm.configJson = JSON.stringify(topic.config, null, 2)
   editConfigDialogVisible.value = true
 }
 
@@ -341,6 +383,15 @@ const deleteTopic = (topic: Topic) => {
     })
 }
 
+// 移除JSON字符串中的注释，使带注释的JSON能被标准JSON.parse解析
+const removeCommentsFromJson = (jsonString: string): string => {
+  // 去除行注释
+  let cleanJson = jsonString.replace(/\/\/.*$/gm, '')
+  // 去除空格和换行，便于后续处理
+  cleanJson = cleanJson.replace(/\s+/g, ' ')
+  return cleanJson
+}
+
 // 提交主题表单
 const submitTopicForm = async () => {
   if (!topicFormRef.value) return
@@ -349,21 +400,14 @@ const submitTopicForm = async () => {
     if (valid) {
       submitting.value = true
       
-      try {
-        // 将配置项转换为对象
-        const config: Record<string, string> = {}
-        topicForm.configItems.forEach(item => {
-          if (item.key && item.value) {
-            config[item.key] = item.value
-          }
-        })
+      try {    
         
         // 创建主题
         topicStore.createTopic({
           name: topicForm.name,
           partitionCount: topicForm.partitionCount,
           replicationFactor: topicForm.replicationFactor,
-          config
+          properties: removeCommentsFromJson(topicForm.configJson)
         })
         
         ElMessage.success('主题创建成功')
@@ -385,12 +429,17 @@ const submitConfigForm = async () => {
   
   try {
     // 将配置项转换为对象
-    const config: Record<string, string> = {}
-    configForm.configItems.forEach(item => {
-      if (item.key && item.value) {
-        config[item.key] = item.value
-      }
-    })
+    // 将配置JSON转换为对象
+    let config: Record<string, string> = {}        
+    try {
+      // 移除注释后再解析
+      const cleanJson = removeCommentsFromJson(configForm.configJson)
+      config = JSON.parse(cleanJson) || {}        
+    } catch (error) {
+      ElMessage.error('配置JSON格式错误')
+      submitting.value = false
+      return
+    }
     
     // 更新主题配置
     topicStore.updateTopicConfig(configForm.name, config)
@@ -404,26 +453,6 @@ const submitConfigForm = async () => {
   }
 }
 
-// 添加配置项
-const addConfigItem = () => {
-  topicForm.configItems.push({ key: '', value: '' })
-}
-
-// 移除配置项
-const removeConfigItem = (index: number) => {
-  topicForm.configItems.splice(index, 1)
-}
-
-// 添加配置项到编辑表单
-const addConfigItemToEdit = () => {
-  configForm.configItems.push({ key: '', value: '' })
-}
-
-// 移除配置项从编辑表单
-const removeConfigItemFromEdit = (index: number) => {
-  configForm.configItems.splice(index, 1)
-}
-
 // 重置主题表单
 const resetTopicForm = () => {
   if (topicFormRef.value) {
@@ -433,11 +462,8 @@ const resetTopicForm = () => {
   Object.assign(topicForm, {
     name: '',
     partitionCount: 1,
-    replicationFactor: 1,
-    configItems: [
-      { key: 'cleanup.policy', value: 'delete' },
-      { key: 'retention.ms', value: '604800000' }
-    ]
+    replicationFactor: 1
+    // 保留configJson的值，不重置为空字符串，以便显示从后端加载的模板配置
   })
 }
 
@@ -460,18 +486,6 @@ const formatConfigPreview = (config: Record<string, string>) => {
   return `${entries[0][0]}=${entries[0][1]}...`
 }
 
-// 格式化配置为表格数据
-const formatConfigForTable = (config: Record<string, string>) => {
-  return Object.entries(config).map(([key, value]) => ({
-    key,
-    value
-  }))
-}
-
-// 获取主题总消息数
-const getTotalMessages = (topic: Topic) => {
-  return topic.partitions.reduce((total, partition) => total + partition.offset, 0)
-}
 </script>
 
 <style scoped>

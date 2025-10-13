@@ -65,7 +65,7 @@ import { useClusterStore } from '../stores/cluster'
 import { useThemeStore } from '../stores/theme'
 import { ElMessage } from 'element-plus'
 import { invoke } from '@tauri-apps/api/core';
-import type { ClusterConfig } from '../stores/cluster'
+import type { ClusterListResponse } from '../stores/cluster'
 
 
 const route = useRoute()
@@ -95,8 +95,9 @@ const goToClusterManagement = () => {
   router.push('/cluster-management')
 }
 onMounted(() => {
-  invoke<ClusterConfig[]>('cluster_list').then(result => {
-     result.forEach(cluster => {
+  invoke<ClusterListResponse>('cluster_list', {page: 1, limit: 100}).then(result => {
+    clusterStore.clearClusters()
+     result.list.forEach(cluster => {
       clusterStore.addCluster(cluster)
      })
   })

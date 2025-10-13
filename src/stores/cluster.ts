@@ -29,10 +29,9 @@ export const useClusterStore = defineStore('cluster', () => {
     return clusters.value.find(cluster => cluster.id === activeClusterId.value) || null 
   })
 
-  function addCluster(cluster: Omit<ClusterConfig, 'id'>) {
+  function addCluster(cluster: ClusterConfig) {
     const newCluster: ClusterConfig = {
       ...cluster,
-      id: Date.now().toString()
     }
     clusters.value.push(newCluster)
     return newCluster.id
@@ -52,6 +51,11 @@ export const useClusterStore = defineStore('cluster', () => {
     }
   }
 
+  function clearClusters() {
+    clusters.value = []
+    activeClusterId.value = null
+  }
+
   function setActiveCluster(id: string) {
     activeClusterId.value = id
   }
@@ -63,6 +67,7 @@ export const useClusterStore = defineStore('cluster', () => {
     addCluster,
     updateCluster,
     deleteCluster,
-    setActiveCluster
+    setActiveCluster,
+    clearClusters
   }
 })
